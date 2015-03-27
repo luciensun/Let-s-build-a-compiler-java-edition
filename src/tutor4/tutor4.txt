@@ -183,9 +183,7 @@ begin
 end;
 {--------------------------------------------------------------}
 
-
 Now, write the following version of Expression:
-
 
 {---------------------------------------------------------------}
 { Parse and Translate an Expression }
@@ -212,7 +210,6 @@ anything else.  Shouldn't take you very long!
 
 OK, now let's extend this to include addops.    Change Expression
 to read:
-
 
 {---------------------------------------------------------------}
 { Parse and Translate an Expression }
@@ -260,8 +257,6 @@ It's not hard to  figure  out what procedure Term should now look
 like.  Change every call to GetNum in function  Expression  to  a
 call to Term, and then enter the following form for Term:
 
-
-
 {---------------------------------------------------------------}
 { Parse and Translate a Math Term }
 
@@ -294,7 +289,6 @@ That seems like a silly restriction at this point, since  we have
 already  seen how easily function GetNum can  be  extended.    So
 let's go ahead and fix it right now.  The new version is
 
-
 {--------------------------------------------------------------}
 { Get a Number }
 
@@ -311,14 +305,12 @@ begin
 end;
 {--------------------------------------------------------------}
 
-
 If you've compiled and  tested  this  version of the interpreter,
 the  next  step  is to install function Factor, complete with pa-
 renthesized  expressions.  We'll hold off a  bit  longer  on  the
 variable  names.    First, change the references  to  GetNum,  in
 function Term, so that they call Factor instead.   Now  code  the
 following version of Factor:
-
 
 {---------------------------------------------------------------}
 { Parse and Translate a Math Factor }
@@ -339,7 +331,6 @@ end;
 
 That was pretty easy, huh?  We're rapidly closing in on  a useful
 interpreter.
-
 
 A LITTLE PHILOSOPHY
 

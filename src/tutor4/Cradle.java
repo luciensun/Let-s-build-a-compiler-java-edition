@@ -162,17 +162,20 @@ public class Cradle {
      * @Title: getNum
      * @Description: Get a Number
      * @param @return 设定文件
-     * @return char 返回类型
+     * @return int 返回类型
      * @throws
      */
-    public char getNum() {
-        char ch = lookAhead;
-        if (!isDigit(ch)) {
+    public int getNum() {
+        int value;
+        value = 0;
+        if (!isDigit(lookAhead)) {
             expected("Integer");
-        } else {
+        }
+        while (isDigit(lookAhead)) {
+            value = value * 10 + (lookAhead - '0');
             getChar();
         }
-        return ch;
+        return value;
     }
 
     /**
@@ -217,19 +220,22 @@ public class Cradle {
      * @Title: factor
      * @Description: Parse and Translate a Math Factor
      * @param 设定文件
-     * @return void 返回类型
+     * @return int 返回类型
      * @throws
      */
-    public void factor() {
+    public int factor() {
+        int value;    
         if (lookAhead == '(') {
             match('(');
-            expression();
+            value = expression();
             match(')');
         } else if (isAlpha(lookAhead)) {
             ident();
+            value = 0;
         } else {
-            emitLn("MOVE #" + getNum() + ",D0");
+            value = getNum();
         }
+        return value;
     }
 
     /**
@@ -266,26 +272,25 @@ public class Cradle {
      * @Title: term
      * @Description: Parse and Translate a Term
      * @param 设定文件
-     * @return void 返回类型
+     * @return int 返回类型
      * @throws
      */
-    public void term() {
-        factor();
+    public int term() {
+        int value;
+        value = factor();
         while (lookAhead == '*' || lookAhead == '/') {
-            emitLn("MOVE D0,-(SP)");
             switch (lookAhead) {
             case '*':
-                muls();
+                match('*');
+                value = value * factor();
                 break;
             case '/':
-                divs();
+                match('/');
+                value = value / factor();
                 break;
-            default:
-                //expected("Mulop");
             }
-
         }
-
+        return value;
     }
 
     /**
@@ -322,30 +327,32 @@ public class Cradle {
      * @Title: expression
      * @Description: Parse and Translate an Expression
      * @param 设定文件
-     * @return void 返回类型
+     * @return int 返回类型
      * @throws
      */
-    public void expression() {
+    public int expression() {
+        int value;
         if (isAddop(lookAhead)) {
-            emitLn("CLR D0");
+            value = 0;
         } else {
-            term();
+            value = term();
         }
         while (isAddop(lookAhead)) {
-            emitLn("MOVE D0,-(SP)");
             switch (lookAhead) {
             case '+':
-                add();
+                match('+');
+                value = value + term();
                 break;
             case '-':
-                sub();
+                match('-');
+                value = value - term();
                 break;
             default:
-                //expected("Addop");
             }
         }
+        return value;
     }
-    
+
     public void assignment() {
         char name;
         name = getName();
@@ -378,9 +385,9 @@ public class Cradle {
     public static void main(String[] args) {
         Cradle cradle = new Cradle();
         cradle.init();
-        cradle.expression();
-        if (cradle.lookAhead != CR) {
-            cradle.expected("Newline");
-        }
+        System.out.println(cradle.expression());
+        /*
+         * if (cradle.lookAhead != CR) { cradle.expected("Newline"); }
+         */
     }
 }
