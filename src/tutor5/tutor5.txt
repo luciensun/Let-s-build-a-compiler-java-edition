@@ -41,7 +41,6 @@ expression  parsing  I  had  already  been through.   I  remember
 thinking, "Hey! This is EASY!" After we've finished this session,
 I'll bet you'll be thinking so, too.
 
-
 THE PLAN
 
 In what follows, we'll be starting over again with a bare cradle,
@@ -67,7 +66,6 @@ just echo the character input.
 OK, then, starting with  yet  another  copy  of the cradle, let's
 define the procedure:
 
-
 {--------------------------------------------------------------}
 { Recognize and Translate an "Other" }
 
@@ -77,9 +75,7 @@ begin
 end;
 {--------------------------------------------------------------}
 
-
 Now include a call to it in the main program, thus:
-
 
 {--------------------------------------------------------------}
 { Main Program }
@@ -89,7 +85,6 @@ begin
    Other;
 end.
 {--------------------------------------------------------------}
-
 
 Run  the program and see what you get.  Not very exciting, is it?
 But hang in there, it's a start, and things will get better.

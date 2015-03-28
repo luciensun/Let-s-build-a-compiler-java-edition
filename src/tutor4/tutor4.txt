@@ -472,7 +472,6 @@ begin
 end;
 {---------------------------------------------------------------}
 
-
 As always, compile and test this version of the  program.    Even
 though all the variables are now zeros, at least we can correctly
 parse the complete expressions, as well as catch any badly formed
@@ -485,12 +484,9 @@ multiple statements.
 
 The assignment statement parallels what we did before:
 
-
 {--------------------------------------------------------------}
 { Parse and Translate an Assignment Statement }
                              
-
-
 procedure Assignment;
 var Name: char;
 begin
@@ -499,7 +495,6 @@ begin
    Table[Name] := Expression;
 end;
 {--------------------------------------------------------------}
-
 
 To test this,  I  added  a  temporary write statement in the main
 program,  to  print out the value of A.  Then I  tested  it  with
@@ -610,7 +605,6 @@ The corresponding changes in  the  main  program are shown below.
 Note that we use the usual  trick  of a case statement based upon
 the current lookahead character, to decide what to do.
 
-
 {--------------------------------------------------------------}
 { Main Program }
 
@@ -626,7 +620,6 @@ begin
    until Look = '.';
 end.
 {--------------------------------------------------------------}
-
 
 You have now completed a  real, working interpreter.  It's pretty
 sparse, but it works just like the "big boys."  It includes three
