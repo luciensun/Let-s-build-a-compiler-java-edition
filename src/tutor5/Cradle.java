@@ -1,9 +1,9 @@
-package tutor4;
+package tutor5;
 
 import java.io.IOException;
 
 /**
- * tutor 4 INTERPRETERS
+ * tutor 5 CONTROL CONSTRUCTS
  * 
  * @author lucienSun
  *
@@ -12,13 +12,11 @@ public class Cradle {
     // Constant Declarations
     private final static char TAB = '\t';
     private final static char CR = '\r';
-    private final static char LF = '\n';
     // Variable Declarations
     /**
      * Lookahead Character
      */
     private char lookAhead;
-    private int[] table;
 
     /**
      * 
@@ -85,26 +83,8 @@ public class Cradle {
     public void match(char x) {
         if (lookAhead == x) {
             getChar();
-            skipWhite();
         } else {
             expected(" ' " + x + " ' ");
-        }
-    }
-
-    /**
-     * 
-     * @Title: newLine
-     * @Description: Recognize and Skip Over a Newline
-     * @param 设定文件
-     * @return void 返回类型
-     * @throws
-     */
-    public void newLine() {
-        if (lookAhead == CR) {
-            getChar();
-            if (lookAhead == LF) {
-                getChar();
-            }
         }
     }
 
@@ -157,37 +137,7 @@ public class Cradle {
             return false;
         }
     }
-    
-    /**
-     * 
-    * @Title: isWhite 
-    * @Description: Recognize White Space
-    * @param @param c
-    * @param @return    设定文件 
-    * @return boolean    返回类型 
-    * @throws
-     */
-    public boolean isWhite(char c) {
-        if (c == ' ' || c == TAB) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-    
-    /**'
-     * 
-    * @Title: skipWhite 
-    * @Description: Skip Over Leading White Space
-    * @param     设定文件 
-    * @return void    返回类型 
-    * @throws
-     */
-    public void skipWhite() {
-        while (isWhite(lookAhead)) {
-            getChar();
-        }
-    }
+
     /**
      * 
      * @Title: getName
@@ -204,7 +154,6 @@ public class Cradle {
         } else {
             getChar();
         }
-        skipWhite();
         return ch;
     }
 
@@ -213,41 +162,17 @@ public class Cradle {
      * @Title: getNum
      * @Description: Get a Number
      * @param @return 设定文件
-     * @return int 返回类型
+     * @return char 返回类型
      * @throws
      */
-    public int getNum() {
-        int value;
-        value = 0;
-        if (!isDigit(lookAhead)) {
+    public char getNum() {
+        char ch = lookAhead;
+        if (!isDigit(ch)) {
             expected("Integer");
-        }
-        while (isDigit(lookAhead)) {
-            value = value * 10 + (lookAhead - '0');
+        } else {
             getChar();
         }
-        skipWhite();
-        return value;
-    }
-
-    /**
-     * 
-     * @Title: getIndex
-     * @Description: convert char value to corresponding index in table
-     * @param @param c
-     * @param @return 设定文件
-     * @return int 返回类型
-     * @throws
-     */
-    public int getIndex(char c) {
-        int ind = 0;
-        if (c >= 'A' && c <= 'Z') {
-            ind = c - 'A';
-        } else {
-            // c >= 'a' && c <= 'z'
-            ind = c - 'a' + 26;
-        }
-        return ind;
+        return ch;
     }
 
     /**
@@ -292,24 +217,19 @@ public class Cradle {
      * @Title: factor
      * @Description: Parse and Translate a Math Factor
      * @param 设定文件
-     * @return int 返回类型
+     * @return void 返回类型
      * @throws
      */
-    public int factor() {
-        int value;
+    public void factor() {
         if (lookAhead == '(') {
             match('(');
-            value = expression();
+            expression();
             match(')');
         } else if (isAlpha(lookAhead)) {
-            // ident();
-            char c = getName();
-            int ind = getIndex(c);
-            value = table[ind];
+            ident();
         } else {
-            value = getNum();
+            emitLn("MOVE #" + getNum() + ",D0");
         }
-        return value;
     }
 
     /**
@@ -346,25 +266,26 @@ public class Cradle {
      * @Title: term
      * @Description: Parse and Translate a Term
      * @param 设定文件
-     * @return int 返回类型
+     * @return void 返回类型
      * @throws
      */
-    public int term() {
-        int value;
-        value = factor();
+    public void term() {
+        factor();
         while (lookAhead == '*' || lookAhead == '/') {
+            emitLn("MOVE D0,-(SP)");
             switch (lookAhead) {
             case '*':
-                match('*');
-                value = value * factor();
+                muls();
                 break;
             case '/':
-                match('/');
-                value = value / factor();
+                divs();
                 break;
+            default:
+                //expected("Mulop");
             }
+
         }
-        return value;
+
     }
 
     /**
@@ -401,57 +322,50 @@ public class Cradle {
      * @Title: expression
      * @Description: Parse and Translate an Expression
      * @param 设定文件
-     * @return int 返回类型
+     * @return void 返回类型
      * @throws
      */
-    public int expression() {
-        int value;
+    public void expression() {
         if (isAddop(lookAhead)) {
-            value = 0;
+            emitLn("CLR D0");
         } else {
-            value = term();
+            term();
         }
         while (isAddop(lookAhead)) {
+            emitLn("MOVE D0,-(SP)");
             switch (lookAhead) {
             case '+':
-                match('+');
-                value = value + term();
+                add();
                 break;
             case '-':
-                match('-');
-                value = value - term();
+                sub();
                 break;
             default:
+                //expected("Addop");
             }
         }
-        return value;
     }
-
+    
     public void assignment() {
         char name;
         name = getName();
         match('=');
-        int ind = getIndex(name);
-        table[ind] = expression();
+        expression();
+        emitLn("LEA " + name + "(PC),A0");
+        emitLn("MOVE D0,(A0)");
     }
 
     /**
      * 
-     * @Title: initTable
-     * @Description: Initialize the Variable Area
-     * @param 设定文件
-     * @return void 返回类型
-     * @throws
+    * @Title: other 
+    * @Description: Recognize and Translate an "Other"
+    * @param     设定文件 
+    * @return void    返回类型 
+    * @throws
      */
-    public void initTable() {
-        // the storage of 26 * 2 possible variables,
-        // : one for each letter of the alphabet(both in uppercase or lowercase)
-        table = new int[52];
-        for (int i = 0; i < table.length; i++) {
-            table[i] = 0;
-        }
+    public void other() {
+        emitLn(String.valueOf(getName()));
     }
-
     /**
      * 
      * @Title: init
@@ -461,39 +375,7 @@ public class Cradle {
      * @throws
      */
     public void init() {
-        initTable();
         getChar();
-        skipWhite();
-    }
-
-    /**
-     * 
-     * @Title: input
-     * @Description: Input Routine
-     * @param 设定文件
-     * @return void 返回类型
-     * @throws
-     */
-    public void input() {
-        match('?');
-        char c = getName();
-        int ind = getIndex(c);
-        table[ind] = getNum();
-    }
-
-    /**
-     * 
-     * @Title: output
-     * @Description: Output Routine
-     * @param 设定文件
-     * @return void 返回类型
-     * @throws
-     */
-    public void output() {
-        match('!');
-        char c = getName();
-        int ind = getIndex(c);
-        emitLn(String.valueOf(table[ind]));
     }
 
     /**
@@ -507,19 +389,6 @@ public class Cradle {
     public static void main(String[] args) {
         Cradle cradle = new Cradle();
         cradle.init();
-        while (cradle.lookAhead != '.') {
-            switch (cradle.lookAhead) {
-            case '?':
-                cradle.input();
-                break;
-            case '!':
-                cradle.output();
-                break;
-            default:
-                cradle.assignment();
-            }
-            cradle.newLine();
-        }
-
+        cradle.other();
     }
 }
