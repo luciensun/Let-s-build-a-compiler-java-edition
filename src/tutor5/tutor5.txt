@@ -122,7 +122,6 @@ begin
 end;
 {--------------------------------------------------------------}
 
-
 Notice  that  I've  arranged to emit  an  "END"  command  to  the
 assembler, which sort of  punctuates  the  output code, and makes
 sense considering that we're parsing a complete program here.
@@ -140,7 +139,6 @@ begin
 end;
 {--------------------------------------------------------------}
 
-
 (From the form of the procedure, you just KNOW we're going  to be
 adding to it in a bit!)
 
@@ -148,7 +146,6 @@ OK, enter these routines into your program.  Replace the  call to
 Block in the main program, by  a  call  to DoProgram.  Now try it
 and  see  how  it works.  Well, it's still not  much,  but  we're
 getting closer.
-
 
 SOME GROUNDWORK
 
@@ -225,23 +222,18 @@ begin
 end;
 {--------------------------------------------------------------}
 
-
 Notice that we've added  a  new  global  variable, LCount, so you
 need to change the VAR declarations at the top of the  program to
 look like this:
 
-
 var Look  : char;              { Lookahead Character }
     Lcount: integer;           { Label Counter }
 
-
 Also, add the following extra initialization to Init:
-
 
    LCount := 0;
 
 (DON'T forget that, or your labels can look really strange!)
-
 
 At this point I'd also like to show you a  new  kind of notation.
 If  you  compare  the form of the IF statement above with the as-
@@ -318,7 +310,6 @@ The code for DoIf is:
 
 procedure Block; Forward;
 
-
 procedure DoIf;
 var L: string;
 begin
@@ -332,10 +323,8 @@ begin
 end;
 {--------------------------------------------------------------}
 
-
 Add this routine to your program, and change  Block  to reference
 it as follows:
-
 
 {--------------------------------------------------------------}
 { Recognize and Translate a Statement Block }
@@ -345,19 +334,17 @@ begin
    while not(Look in ['e']) do begin
       case Look of
        'i': DoIf;
-       'o': Other;
+       else: Other;
       end;
    end;
 end;
 {--------------------------------------------------------------}
-
 
 Notice the reference to procedure Condition.    Eventually, we'll
 write a routine that  can  parse  and  translate any Boolean con-
 dition we care to give it.  But  that's  a  whole  installment by
 itself (the next one, in fact).    For  now, let's just make it a
 dummy that emits some text.  Write the following routine:
-
 
 {--------------------------------------------------------------}
 { Parse and Translate a Boolean Condition }
@@ -368,7 +355,6 @@ begin
    EmitLn('<condition>');
 end;
 {--------------------------------------------------------------}
-
 
 Insert this procedure in your program just before DoIf.   Now run
 the program.  Try a string like

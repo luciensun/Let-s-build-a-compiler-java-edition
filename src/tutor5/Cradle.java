@@ -13,10 +13,11 @@ public class Cradle {
     private final static char TAB = '\t';
     private final static char CR = '\r';
     // Variable Declarations
-    /**
-     * Lookahead Character
-     */
+
+    // Lookahead Character
     private char lookAhead;
+    // Label Counter
+    private int lCount;
 
     /**
      * 
@@ -281,7 +282,7 @@ public class Cradle {
                 divs();
                 break;
             default:
-                //expected("Mulop");
+                // expected("Mulop");
             }
 
         }
@@ -341,11 +342,11 @@ public class Cradle {
                 sub();
                 break;
             default:
-                //expected("Addop");
+                // expected("Addop");
             }
         }
     }
-    
+
     public void assignment() {
         char name;
         name = getName();
@@ -357,15 +358,112 @@ public class Cradle {
 
     /**
      * 
-    * @Title: other 
-    * @Description: Recognize and Translate an "Other"
-    * @param     设定文件 
-    * @return void    返回类型 
-    * @throws
+     * @Title: other
+     * @Description: Recognize and Translate an "Other"
+     * @param 设定文件
+     * @return void 返回类型
+     * @throws
      */
     public void other() {
         emitLn(String.valueOf(getName()));
     }
+
+    /**
+     * 
+     * @Title: newLabel
+     * @Description: Generate a Unique Label in the form of 'Lnn', where nn is a
+     *               label number starting from zero.
+     * @param @return 设定文件
+     * @return String 返回类型
+     * @throws
+     */
+    public String newLabel() {
+        String str = null;
+        str = String.valueOf(lCount);
+        lCount++;
+        return "L" + str;
+    }
+
+    /**
+     * 
+     * @Title: postLabel
+     * @Description: Post a Label To Output
+     * @param @param str 设定文件
+     * @return void 返回类型
+     * @throws
+     */
+    public void postLabel(String label) {
+        System.out.println(label + ":");
+    }
+
+    /**
+     * 
+     * @Title: condition
+     * @Description: Parse and Translate a Boolean Condition
+     * @param 设定文件
+     * @return void 返回类型
+     * @throws
+     */
+    public void condition() {
+        emitLn("<condition>");
+    }
+
+    /**
+     * 
+     * @Title: doIf
+     * @Description: Recognize and Translate an IF Construct
+     * @param 设定文件
+     * @return void 返回类型
+     * @throws
+     */
+    public void doIf() {
+        String label = null;
+        match('i');
+        label = newLabel();
+        condition();
+        emitLn("BEQ " + label);
+        block();
+        match('e');
+        postLabel(label);
+
+    }
+
+    /**
+     * 
+     * @Title: block
+     * @Description: Recognize and Translate a Statement Block
+     * @param 设定文件
+     * @return void 返回类型
+     * @throws
+     */
+    public void block() {
+        while (lookAhead != 'e') {
+            switch (lookAhead) {
+            case 'i':
+                doIf();
+                break;
+            default:
+                other();
+            }
+        }
+    }
+
+    /**
+     * 
+     * @Title: program
+     * @Description: Parse and Translate a Program
+     * @param 设定文件
+     * @return void 返回类型
+     * @throws
+     */
+    public void program() {
+        block();
+        if (lookAhead != 'e') {
+            expected("end");
+        }
+        emitLn("END");
+    }
+
     /**
      * 
      * @Title: init
@@ -375,6 +473,7 @@ public class Cradle {
      * @throws
      */
     public void init() {
+        lCount = 0;
         getChar();
     }
 
@@ -389,6 +488,6 @@ public class Cradle {
     public static void main(String[] args) {
         Cradle cradle = new Cradle();
         cradle.init();
-        cradle.other();
+        cradle.program();
     }
 }
