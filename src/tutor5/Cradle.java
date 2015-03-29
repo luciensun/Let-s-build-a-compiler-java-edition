@@ -417,15 +417,23 @@ public class Cradle {
      * @throws
      */
     public void doIf() {
-        String label = null;
+        String label1 = null;
+        String label2 = null;
         match('i');
-        label = newLabel();
+        label1 = newLabel();
+        label2 = label1;
         condition();
-        emitLn("BEQ " + label);
+        emitLn("BEQ " + label1);
         block();
+        if (lookAhead == 'l') {
+            match('l');
+            label2 = newLabel();
+            emitLn("BRA " + label2);
+            postLabel(label1);
+            block();
+        }
         match('e');
-        postLabel(label);
-
+        postLabel(label2);
     }
 
     /**

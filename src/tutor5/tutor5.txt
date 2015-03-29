@@ -406,12 +406,10 @@ This leads us to the following syntax-directed translation:
      <block>
      ENDIF          { PostLabel(L2) }
 
-
 Comparing this with the case for an ELSE-less IF gives us  a clue
 as to how to handle both situations.   The  code  below  does it.
 (Note that I  use  an  'l'  for  the ELSE, since 'e' is otherwise
 occupied):
-
 
 {--------------------------------------------------------------}
 { Recognize and Translate an IF Construct }
@@ -437,7 +435,6 @@ begin
 end;
 {--------------------------------------------------------------}
 
-
 There you have it.  A complete IF parser/translator, in  19 lines
 of code.
 
@@ -453,7 +450,6 @@ less case, try
 Now try some nested IF's.  Try anything you like,  including some
 badly formed statements.   Just  remember that 'e' is not a legal
 "other" statement.
-
 
 THE WHILE STATEMENT
 
