@@ -474,19 +474,14 @@ work for the compiler writer.
 Now,  consider  what  the  WHILE  should be translated into.   It
 should be:
 
-
      L1:  <condition>
           BEQ L2
           <block>
           BRA L1
      L2:
 
-
-
-
 As before, comparing the two representations gives us the actions
 needed at each point.
-
 
      WHILE          { L1 = NewLabel;
                       PostLabel(L1) }
@@ -494,10 +489,8 @@ needed at each point.
      <block>
      ENDWHILE       { Emit(BRA L1);
                       PostLabel(L2) }
-
-
+                      
 The code follows immediately from the syntax:
-
 
 {--------------------------------------------------------------}
 { Parse and Translate a WHILE Statement }
@@ -518,10 +511,8 @@ begin
 end;
 {--------------------------------------------------------------}
 
-
 Since  we've  got a new statement, we have to add a  call  to  it
 within procedure Block:
-
 
 {--------------------------------------------------------------}
 { Recognize and Translate a Statement Block }
@@ -537,7 +528,6 @@ begin
    end;
 end;
 {--------------------------------------------------------------}
-
 
 No other changes are necessary.
 
@@ -556,7 +546,6 @@ almost falls out  from  there,  and  it doesn't affect any of the
 other routines.  Once you've gotten the feel of the thing, you'll
 see that you  can  add  new  constructs  about as fast as you can
 dream them up.
-
 
 THE LOOP STATEMENT
 
@@ -585,11 +574,9 @@ and the syntax-directed translation is:
      <block>
      ENDLOOP        { Emit(BRA L }
 
-
 The corresponding code is shown below.  Since  I've  already used
 'l'  for  the  ELSE, I've used  the  last  letter,  'p',  as  the
 "keyword" this time.
-
 
 {--------------------------------------------------------------}
 { Parse and Translate a LOOP Statement }
@@ -606,11 +593,8 @@ begin
 end;
 {--------------------------------------------------------------}
                              
-
 When you insert this routine, don't forget to add a line in Block
 to call it.
-
-
 
 
 REPEAT-UNTIL
@@ -651,7 +635,6 @@ begin
 end;
 {--------------------------------------------------------------}
 
-
 As  before, we have to add the call  to  DoRepeat  within  Block.
 This time, there's a difference, though.  I decided  to  use  'r'
 for REPEAT (naturally), but I also decided to use 'u'  for UNTIL.
@@ -659,7 +642,6 @@ This means that the 'u' must be added to the set of characters in
 the while-test.  These  are  the  characters  that signal an exit
 from the current  block  ... the "follow" characters, in compiler
 jargon.
-
 
 {--------------------------------------------------------------}
 { Recognize and Translate a Statement Block }
@@ -789,7 +771,6 @@ end;
 Since we don't have  expressions  in this parser, I used the same
 trick as for Condition, and wrote the routine
 
-
 {--------------------------------------------------------------}
 { Parse and Translate an Expression }
 { This version is a dummy }
@@ -799,7 +780,6 @@ begin
    EmitLn('<expr>');
 end;
 {--------------------------------------------------------------}
-
 
 Give it a try.  Once again,  don't  forget  to  add  the  call in
 Block.    Since  we don't have any input for the dummy version of
@@ -825,7 +805,6 @@ the last of our loop structures.
                              
 The syntax and its translation is:
 
-
      DO
      <expr>         { Emit(SUBQ #1,D0);
                       L = NewLabel;
@@ -835,10 +814,8 @@ The syntax and its translation is:
      ENDDO          { Emit(MOVE (SP)+,D0;
                       Emit(DBRA D0,L) }
 
-
 That's quite a bit simpler!  The loop will execute  <expr> times.
 Here's the code:
-
 
 {--------------------------------------------------------------}
 { Parse and Translate a DO Statement }
@@ -857,7 +834,6 @@ begin
    EmitLn('DBRA D0,' + L);
 end;
 {--------------------------------------------------------------}
-
 
 I think you'll have to agree, that's a whole lot simpler than the
 classical FOR.  Still, each construct has its place.

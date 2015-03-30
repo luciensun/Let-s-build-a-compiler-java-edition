@@ -321,30 +321,14 @@ public class Cradle {
     /**
      * 
      * @Title: expression
-     * @Description: Parse and Translate an Expression
+     * @Description: Parse and Translate an Expression 
      * @param 设定文件
      * @return void 返回类型
      * @throws
      */
     public void expression() {
-        if (isAddop(lookAhead)) {
-            emitLn("CLR D0");
-        } else {
-            term();
-        }
-        while (isAddop(lookAhead)) {
-            emitLn("MOVE D0,-(SP)");
-            switch (lookAhead) {
-            case '+':
-                add();
-                break;
-            case '-':
-                sub();
-                break;
-            default:
-                // expected("Addop");
-            }
-        }
+        // This version is a dummy
+        emitLn("<expr>");
     }
 
     public void assignment() {
@@ -438,6 +422,116 @@ public class Cradle {
 
     /**
      * 
+     * @Title: doWhile
+     * @Description: Parse and Translate a WHILE Statement
+     * @param 设定文件
+     * @return void 返回类型
+     * @throws
+     */
+    public void doWhile() {
+        String label1 = null;
+        String label2 = null;
+        match('w');
+        label1 = newLabel();
+        label2 = newLabel();
+        postLabel(label1);
+        condition();
+        emitLn("BEQ " + label2);
+        block();
+        match('e');
+        emitLn("BRA " + label1);
+        postLabel(label2);
+    }
+
+    /**
+     * 
+     * @Title: doLoop
+     * @Description: Parse and Translate a LOOP Statement
+     * @param 设定文件
+     * @return void 返回类型
+     * @throws
+     */
+    public void doLoop() {
+        String label = null;
+        match('p');
+        label = newLabel();
+        postLabel(label);
+        block();
+        match('e');
+        emitLn("BRA " + label);
+    }
+
+    /**
+     * 
+     * @Title: doRepeat
+     * @Description: Parse and Translate a REPEAT Statement
+     * @param 设定文件
+     * @return void 返回类型
+     * @throws
+     */
+    public void doRepeat() {
+        String label = null;
+        match('r');
+        label = newLabel();
+        postLabel(label);
+        block();
+        match('u');
+        condition();
+        emitLn("BEQ " + label);
+    }
+    
+    /**
+     * 
+    * @Title: doFor 
+    * @Description: Parse and Translate a FOR Statement
+    * @param     设定文件 
+    * @return void    返回类型 
+    * @throws
+     */
+    public void doFor() {
+        String label1 = null;
+        String label2 = null;
+        char name;
+        match('f');
+        label1 = newLabel();
+        label2 = newLabel();
+        name = getName();
+        match('=');
+        expression();
+        emitLn("SUBQ #1,D0");
+        emitLn("LEA " + name + "(PC),A0");
+        emitLn("MOVE D0,(A0)");
+        expression();
+        emitLn("MOVE D0,-(SP)");
+        postLabel(label1);
+        emitLn("LEA " + name + "(PC),A0");
+        emitLn("MOVE (A0),D0");
+        emitLn("ADDQ #1,D0");
+        emitLn("MOVE D0,(A0)");
+        emitLn("CMP (SP),D0");
+        emitLn("BGT " + label2);
+        block();
+        match('e');
+        emitLn("BRA " + label1);
+        postLabel(label2);
+        emitLn("ADDQ #2,SP");
+    }
+    
+    public void doDo() {
+        String label = null;
+        char name;
+        match('d');
+        label = newLabel();
+        expression();
+        emitLn("SUBQ #1,D0");
+        postLabel(label);
+        emitLn("MOVE D0, -(SP)");
+        block();
+        emitLn("MOVE (SP)+,D0");
+        emitLn("DBRA D0," + label);
+    }
+    /**
+     * 
      * @Title: block
      * @Description: Recognize and Translate a Statement Block
      * @param 设定文件
@@ -445,10 +539,22 @@ public class Cradle {
      * @throws
      */
     public void block() {
-        while (lookAhead != 'e') {
+        while (lookAhead != 'e' && lookAhead != 'l') {
             switch (lookAhead) {
             case 'i':
                 doIf();
+                break;
+            case 'w':
+                doWhile();
+                break;
+            case 'p':
+                doLoop();
+                break;
+            case 'r':
+                doRepeat();
+                break;
+            case 'f':
+                doFor();
                 break;
             default:
                 other();
