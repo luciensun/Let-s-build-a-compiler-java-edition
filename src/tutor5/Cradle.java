@@ -138,7 +138,38 @@ public class Cradle {
             return false;
         }
     }
-
+    
+    /**
+     * 
+    * @Title: isWhite 
+    * @Description: Recognize White Space
+    * @param @param c
+    * @param @return    设定文件 
+    * @return boolean    返回类型 
+    * @throws
+     */
+    public boolean isWhite(char c) {
+        if (c == ' ' || c == TAB) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
+    /**
+     * 
+    * @Title: skipWhite 
+    * @Description: Skip Over Leading White Space
+    * @param     设定文件 
+    * @return void    返回类型 
+    * @throws
+     */
+    public void skipWhite() {
+        while(isWhite(lookAhead)) {
+            getChar();
+        }
+    }
+    
     /**
      * 
      * @Title: getName
@@ -178,182 +209,6 @@ public class Cradle {
 
     /**
      * 
-     * @Title: emit
-     * @Description: Output a String with TAB
-     * @param @param str 设定文件
-     * @return void 返回类型
-     * @throws
-     */
-    public void emit(String str) {
-        System.out.print(TAB + str);
-    }
-
-    /**
-     * 
-     * @Title: emitLn
-     * @Description: Output a String with TAB and CRLF
-     * @param @param str 设定文件
-     * @return void 返回类型
-     * @throws
-     */
-    public void emitLn(String str) {
-        emit(str);
-        System.out.println("");
-    }
-
-    public void ident() {
-        char name;
-        name = getName();
-        if (lookAhead == '(') {
-            match('(');
-            match(')');
-            emitLn("BSR " + name);
-        } else {
-            emitLn("MOVE " + getName() + "(PC),D0");
-        }
-    }
-
-    /**
-     * 
-     * @Title: factor
-     * @Description: Parse and Translate a Math Factor
-     * @param 设定文件
-     * @return void 返回类型
-     * @throws
-     */
-    public void factor() {
-        if (lookAhead == '(') {
-            match('(');
-            expression();
-            match(')');
-        } else if (isAlpha(lookAhead)) {
-            ident();
-        } else {
-            emitLn("MOVE #" + getNum() + ",D0");
-        }
-    }
-
-    /**
-     * 
-     * @Title: muls
-     * @Description: Recognize and Translate a Multiply
-     * @param 设定文件
-     * @return void 返回类型
-     * @throws
-     */
-    public void muls() {
-        match('*');
-        factor();
-        emitLn("MULS (SP)+,D0");
-    }
-
-    /**
-     * 
-     * @Title: divs
-     * @Description: Recognize and Translate a Divide
-     * @param 设定文件
-     * @return void 返回类型
-     * @throws
-     */
-    public void divs() {
-        match('/');
-        factor();
-        emitLn("MOVE (SP)+,D1");
-        emitLn("DIVS D1,D0");
-    }
-
-    /**
-     * 
-     * @Title: term
-     * @Description: Parse and Translate a Term
-     * @param 设定文件
-     * @return void 返回类型
-     * @throws
-     */
-    public void term() {
-        factor();
-        while (lookAhead == '*' || lookAhead == '/') {
-            emitLn("MOVE D0,-(SP)");
-            switch (lookAhead) {
-            case '*':
-                muls();
-                break;
-            case '/':
-                divs();
-                break;
-            default:
-                // expected("Mulop");
-            }
-
-        }
-
-    }
-
-    /**
-     * 
-     * @Title: add
-     * @Description: Recognize and Translate an Add
-     * @param 设定文件
-     * @return void 返回类型
-     * @throws
-     */
-    public void add() {
-        match('+');
-        term();
-        emitLn("ADD (SP)+,D0");
-    }
-
-    /**
-     * 
-     * @Title: sub
-     * @Description: Recognize and Translate a Subtract
-     * @param 设定文件
-     * @return void 返回类型
-     * @throws
-     */
-    public void sub() {
-        match('-');
-        term();
-        emitLn("SUB (SP)+,D0");
-        emitLn("NEG D0");
-    }
-
-    /**
-     * 
-     * @Title: expression
-     * @Description: Parse and Translate an Expression 
-     * @param 设定文件
-     * @return void 返回类型
-     * @throws
-     */
-    public void expression() {
-        // This version is a dummy
-        emitLn("<expr>");
-    }
-
-    public void assignment() {
-        char name;
-        name = getName();
-        match('=');
-        expression();
-        emitLn("LEA " + name + "(PC),A0");
-        emitLn("MOVE D0,(A0)");
-    }
-
-    /**
-     * 
-     * @Title: other
-     * @Description: Recognize and Translate an "Other"
-     * @param 设定文件
-     * @return void 返回类型
-     * @throws
-     */
-    public void other() {
-        emitLn(String.valueOf(getName()));
-    }
-
-    /**
-     * 
      * @Title: newLabel
      * @Description: Generate a Unique Label in the form of 'Lnn', where nn is a
      *               label number starting from zero.
@@ -379,6 +234,43 @@ public class Cradle {
     public void postLabel(String label) {
         System.out.println(label + ":");
     }
+    
+    /**
+     * 
+     * @Title: emit
+     * @Description: Output a String with TAB
+     * @param @param str 设定文件
+     * @return void 返回类型
+     * @throws
+     */
+    public void emit(String str) {
+        System.out.print(TAB + str);
+    }
+
+    /**
+     * 
+     * @Title: emitLn
+     * @Description: Output a String with TAB and CRLF
+     * @param @param str 设定文件
+     * @return void 返回类型
+     * @throws
+     */
+    public void emitLn(String str) {
+        emit(str);
+        System.out.println("");
+    }
+
+    /**
+     * 
+     * @Title: other
+     * @Description: Recognize and Translate an "Other"
+     * @param 设定文件
+     * @return void 返回类型
+     * @throws
+     */
+    public void other() {
+        emitLn(String.valueOf(getName()));
+    }
 
     /**
      * 
@@ -394,13 +286,25 @@ public class Cradle {
 
     /**
      * 
+    * @Title: expression 
+    * @Description: Parse and Translate a Math Expression
+    * @param     设定文件 
+    * @return void    返回类型 
+    * @throws
+     */
+    public void expression() {
+        emitLn("<expr>");
+    }
+    
+    /**
+     * 
      * @Title: doIf
      * @Description: Recognize and Translate an IF Construct
      * @param 设定文件
      * @return void 返回类型
      * @throws
      */
-    public void doIf() {
+    public void doIf(String label) {
         String label1 = null;
         String label2 = null;
         match('i');
@@ -408,13 +312,13 @@ public class Cradle {
         label2 = label1;
         condition();
         emitLn("BEQ " + label1);
-        block();
+        block(label);
         if (lookAhead == 'l') {
             match('l');
             label2 = newLabel();
             emitLn("BRA " + label2);
             postLabel(label1);
-            block();
+            block(label);
         }
         match('e');
         postLabel(label2);
@@ -437,7 +341,7 @@ public class Cradle {
         postLabel(label1);
         condition();
         emitLn("BEQ " + label2);
-        block();
+        block(label2);
         match('e');
         emitLn("BRA " + label1);
         postLabel(label2);
@@ -452,13 +356,16 @@ public class Cradle {
      * @throws
      */
     public void doLoop() {
-        String label = null;
+        String label1 = null;
+        String label2 = null;
         match('p');
-        label = newLabel();
-        postLabel(label);
-        block();
+        label1 = newLabel();
+        label2 = newLabel();
+        postLabel(label1);
+        block(label2);
         match('e');
-        emitLn("BRA " + label);
+        emitLn("BRA " + label1);
+        postLabel(label2);
     }
 
     /**
@@ -470,14 +377,17 @@ public class Cradle {
      * @throws
      */
     public void doRepeat() {
-        String label = null;
+        String label1 = null;
+        String label2 = null;
         match('r');
-        label = newLabel();
-        postLabel(label);
-        block();
+        label1 = newLabel();
+        label2 = newLabel();
+        postLabel(label1);
+        block(label2);
         match('u');
         condition();
-        emitLn("BEQ " + label);
+        emitLn("BEQ " + label1);
+        postLabel(label2);
     }
     
     /**
@@ -510,25 +420,56 @@ public class Cradle {
         emitLn("MOVE D0,(A0)");
         emitLn("CMP (SP),D0");
         emitLn("BGT " + label2);
-        block();
+        block(label2);
         match('e');
         emitLn("BRA " + label1);
         postLabel(label2);
         emitLn("ADDQ #2,SP");
     }
     
+    /**
+     * 
+    * @Title: doDo 
+    * @Description: Parse and Translate a DO Statement
+    * @param     设定文件 
+    * @return void    返回类型 
+    * @throws
+     */
     public void doDo() {
-        String label = null;
-        char name;
+        String label1 = null;
+        String label2 = null;
         match('d');
-        label = newLabel();
+        label1 = newLabel();
+        label2 = newLabel();
         expression();
         emitLn("SUBQ #1,D0");
-        postLabel(label);
+        postLabel(label1);
         emitLn("MOVE D0, -(SP)");
-        block();
+        block(label2);
         emitLn("MOVE (SP)+,D0");
-        emitLn("DBRA D0," + label);
+        emitLn("DBRA D0," + label1);
+        emitLn("SUBQ #2,SP");
+        postLabel(label2);
+        emitLn("SUBQ #2,SP");
+        postLabel(label2);
+        emitLn("ADDQ #2,SP");
+    }
+    
+    /**
+     * 
+    * @Title: doBreak 
+    * @Description: Recognize and Translate a BREAK
+    * @param @param label    设定文件 
+    * @return void    返回类型 
+    * @throws
+     */
+    public void doBreak(String label) {
+        match('b');
+        if (label != null && !("".equals(label))) {
+            emitLn("BRA " + label);
+        } else {
+            abort("No loop to break from");
+        }
     }
     /**
      * 
@@ -538,11 +479,11 @@ public class Cradle {
      * @return void 返回类型
      * @throws
      */
-    public void block() {
-        while (lookAhead != 'e' && lookAhead != 'l') {
+    public void block(String label) {
+        while (lookAhead != 'e' && lookAhead != 'l' && lookAhead != 'u') {
             switch (lookAhead) {
             case 'i':
-                doIf();
+                doIf(label);
                 break;
             case 'w':
                 doWhile();
@@ -555,6 +496,12 @@ public class Cradle {
                 break;
             case 'f':
                 doFor();
+                break;
+            case 'd':
+                doDo();
+                break;
+            case 'b':
+                doBreak(label);
                 break;
             default:
                 other();
@@ -571,7 +518,7 @@ public class Cradle {
      * @throws
      */
     public void program() {
-        block();
+        block(null);
         if (lookAhead != 'e') {
             expected("end");
         }

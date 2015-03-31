@@ -900,7 +900,6 @@ begin
 end;
 {--------------------------------------------------------------}
 
-
 Notice that DoLoop now has TWO labels, not just one.   The second
 is to give the BREAK instruction a target to jump  to.   If there
 is no BREAK within  the  loop, we've wasted a label and cluttered
@@ -908,7 +907,6 @@ up things a bit, but there's no harm done.
 
 Note also that Block now has a parameter, which  for  loops  will
 always be the exit address.  The new version of Block is:
-
 
 {--------------------------------------------------------------}
 { Recognize and Translate a Statement Block }
@@ -929,7 +927,6 @@ begin
    end;
 end;
 {--------------------------------------------------------------}
-
 
 Again,  notice  that  all Block does with the label is to pass it
 into DoIf and  DoBreak.    The  loop  constructs  don't  need it,
@@ -964,7 +961,6 @@ begin
 end;
 {--------------------------------------------------------------}
 
-
 Here,  the  only  thing  that  changes  is  the addition  of  the
 parameter to procedure Block.  An IF statement doesn't change the
 loop  nesting level, so DoIf just passes the  label  along.    No
@@ -975,7 +971,6 @@ Now, remember that DoProgram also calls Block, so it now needs to
 pass it a label.  An  attempt  to  exit the outermost block is an
 error, so DoProgram  passes  a  null  label  which  is  caught by
 DoBreak:
-
 
 {--------------------------------------------------------------}
 { Recognize and Translate a BREAK }
@@ -988,7 +983,6 @@ begin
    else Abort('No loop to break from');
 end;
 
-
 {--------------------------------------------------------------}
 
 { Parse and Translate a Program }
@@ -1000,7 +994,6 @@ begin
    EmitLn('END')
 end;
 {--------------------------------------------------------------}
-
 
 That  ALMOST takes care of everything.  Give it a try, see if you
 can "break" it <pun>.  Careful, though.  By this time  we've used
@@ -1016,9 +1009,6 @@ break  out  of  this loop, the value of the loop counter is still
 left on the stack.  We're going to have to fix that!  A shame ...
 that was one  of  our  smaller  routines, but it can't be helped.
 Here's a version that doesn't have the problem:
-
-
-
 
 {--------------------------------------------------------------}
 { Parse and Translate a DO Statement }
@@ -1042,11 +1032,9 @@ begin
 end;
 {--------------------------------------------------------------}
 
-
 The  two  extra  instructions,  the  SUBQ and ADDQ, take care  of
 leaving the stack in the right shape.
                              
-
 CONCLUSION
 
 At this point we have created a number of control  constructs ...
@@ -1067,8 +1055,6 @@ that we've used here.  See you then.
 
 For reference purposes, here is  the  completed  parser  for this
 session:
-
-
 
 
 {--------------------------------------------------------------}
