@@ -572,7 +572,7 @@ and the syntax-directed translation is:
      LOOP           { L = NewLabel;
                       PostLabel(L) }
      <block>
-     ENDLOOP        { Emit(BRA L }
+     ENDLOOP        { Emit(BRA L) }
 
 The corresponding code is shown below.  Since  I've  already used
 'l'  for  the  ELSE, I've used  the  last  letter,  'p',  as  the
@@ -758,7 +758,7 @@ begin
    EmitLn('ADDQ #1,D0');
    EmitLn('MOVE D0,(A0)');
    EmitLn('CMP (SP),D0');
-   EmitLn('BGT ' + L2);
+   EmitLn('BLE ' + L2);
    Block;
    Match('e');
    EmitLn('BRA ' + L1);

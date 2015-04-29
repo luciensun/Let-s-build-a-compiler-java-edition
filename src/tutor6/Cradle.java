@@ -1,4 +1,4 @@
-package tutor5;
+package tutor6;
 
 import java.io.IOException;
 
@@ -124,6 +124,57 @@ public class Cradle {
 
     /**
      * 
+     * @Title: isBoolean
+     * @Description: Recognize a Boolean Literal
+     * @param @param c
+     * @param @return 设定文件
+     * @return boolean 返回类型
+     * @throws
+     */
+    public boolean isBoolean(char c) {
+        if (c == 'T' || c == 'F') {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * 
+    * @Title: isOrOp 
+    * @Description: Recognize a Boolean Orop
+    * @param @param c
+    * @param @return    设定文件 
+    * @return boolean    返回类型 
+    * @throws
+     */
+    public boolean isOrOp(char c) {
+        if (c == '|' || c == '~') {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
+    /**
+     * 
+    * @Title: isRelOp 
+    * @Description: Recognize a Relop
+    * @param @param c
+    * @param @return    设定文件 
+    * @return boolean    返回类型 
+    * @throws
+     */
+    public boolean isRelOp(char c) {
+        if (c == '=' || c =='#' || c == '<' || c =='>') {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
+    /**
+     * 
      * @Title: isAddop
      * @Description: Recognize an Addop
      * @param @param c
@@ -138,15 +189,15 @@ public class Cradle {
             return false;
         }
     }
-    
+
     /**
      * 
-    * @Title: isWhite 
-    * @Description: Recognize White Space
-    * @param @param c
-    * @param @return    设定文件 
-    * @return boolean    返回类型 
-    * @throws
+     * @Title: isWhite
+     * @Description: Recognize White Space
+     * @param @param c
+     * @param @return 设定文件
+     * @return boolean 返回类型
+     * @throws
      */
     public boolean isWhite(char c) {
         if (c == ' ' || c == TAB) {
@@ -155,21 +206,21 @@ public class Cradle {
             return false;
         }
     }
-    
+
     /**
      * 
-    * @Title: skipWhite 
-    * @Description: Skip Over Leading White Space
-    * @param     设定文件 
-    * @return void    返回类型 
-    * @throws
+     * @Title: skipWhite
+     * @Description: Skip Over Leading White Space
+     * @param 设定文件
+     * @return void 返回类型
+     * @throws
      */
     public void skipWhite() {
-        while(isWhite(lookAhead)) {
+        while (isWhite(lookAhead)) {
             getChar();
         }
     }
-    
+
     /**
      * 
      * @Title: getName
@@ -209,6 +260,26 @@ public class Cradle {
 
     /**
      * 
+    * @Title: getBoolean 
+    * @Description: Get a Boolean Literal
+    * @param @return    设定文件 
+    * @return boolean    返回类型 
+    * @throws
+     */
+    public boolean getBoolean() {
+        char ch = lookAhead;
+        boolean bVal = false;
+        if (!isBoolean(ch)) {
+            expected("Boolean Literal");
+        } else {
+            bVal = lookAhead == 'T';
+            getChar();
+        }
+        return bVal;
+    }
+
+    /**
+     * 
      * @Title: newLabel
      * @Description: Generate a Unique Label in the form of 'Lnn', where nn is a
      *               label number starting from zero.
@@ -234,7 +305,7 @@ public class Cradle {
     public void postLabel(String label) {
         System.out.println(label + ":");
     }
-    
+
     /**
      * 
      * @Title: emit
@@ -274,6 +345,58 @@ public class Cradle {
 
     /**
      * 
+    * @Title: relation 
+    * @Description: Parse and Translate a Relation
+    * @param     设定文件 
+    * @return void    返回类型 
+    * @throws
+     */
+    public void relation() {
+        emitLn("<Relation>");
+        getChar();
+    }
+    
+    /**
+     * 
+    * @Title: booleanFactor 
+    * @Description: Parse and Translate a Boolean Factor
+    * @param     设定文件 
+    * @return void    返回类型 
+    * @throws
+     */
+    public void booleanFactor() {
+        if (isBoolean(lookAhead)) {
+            if (getBoolean()) {
+                emitLn("MOVE #-1,D0");
+            } else {
+                emitLn("CLR D0");
+            }
+        } else {
+            relation();
+        }
+
+    }
+    
+    /**
+     * 
+    * @Title: notFactor 
+    * @Description: Parse and Translate a Boolean Factor with NOT
+    * @param     设定文件 
+    * @return void    返回类型 
+    * @throws
+     */
+    public void notFactor() {
+        if (lookAhead == '!') {
+            match('!');
+            booleanFactor();
+            emitLn("EOR #-1,D0");    
+        } else {
+            booleanFactor();
+        }
+    }
+    
+    /**
+     * 
      * @Title: condition
      * @Description: Parse and Translate a Boolean Condition
      * @param 设定文件
@@ -286,11 +409,56 @@ public class Cradle {
 
     /**
      * 
-    * @Title: expression 
-    * @Description: Parse and Translate a Math Expression
+    * @Title: booleanTerm 
+    * @Description: Parse and Translate a Boolean Term
     * @param     设定文件 
     * @return void    返回类型 
     * @throws
+     */
+    public void booleanTerm() {
+        notFactor();
+        while(lookAhead == '&') {
+            emitLn("MOVE D0,-(SP)");
+            match('&');
+            notFactor();
+            emitLn("AND (SP)+, D0");
+        }
+    }
+    /**
+     * 
+    * @Title: booleanOr 
+    * @Description: Recognize and Translate a Boolean OR
+    * @param     设定文件 
+    * @return void    返回类型 
+    * @throws
+     */
+    public void booleanOr() {
+        match('|');
+        booleanTerm();
+        emitLn("OR (SP)+, D0");
+    }
+    
+    /**
+     * 
+    * @Title: booleanXor 
+    * @Description: Recognize and Translate an Exclusive Or
+    * @param     设定文件 
+    * @return void    返回类型 
+    * @throws
+     */
+    public void booleanXor() {
+        match('~');
+        booleanTerm();
+        emitLn("EOR (SP)+, D0");
+    }
+    
+    /**
+     * 
+     * @Title: expression
+     * @Description: Parse and Translate a Math Expression
+     * @param 设定文件
+     * @return void 返回类型
+     * @throws
      */
     public void expression() {
         emitLn("<expr>");
@@ -298,11 +466,30 @@ public class Cradle {
     
     /**
      * 
-    * @Title: doIf 
-    * @Description: TODO(这里用一句话描述这个方法的作用) 
-    * @param @param label    设定文件 
+    * @Title: booleanExpression 
+    * @Description: Parse and Translate a Boolean Expression
+    * @param     设定文件 
     * @return void    返回类型 
     * @throws
+     */
+    public void booleanExpression() {
+        booleanTerm();
+        while(isOrOp(lookAhead)) {
+            emitLn("MOVE D0,-(SP)");
+            switch(lookAhead) {
+            case '|': booleanOr();break;
+            case '~': booleanXor();break;
+            }
+        }
+    }
+
+    /**
+     * 
+     * @Title: doIf
+     * @Description: TODO(这里用一句话描述这个方法的作用)
+     * @param @param label 设定文件
+     * @return void 返回类型
+     * @throws
      */
     public void doIf(String label) {
         String label1 = null;
@@ -389,14 +576,14 @@ public class Cradle {
         emitLn("BEQ " + label1);
         postLabel(label2);
     }
-    
+
     /**
      * 
-    * @Title: doFor 
-    * @Description: Parse and Translate a FOR Statement
-    * @param     设定文件 
-    * @return void    返回类型 
-    * @throws
+     * @Title: doFor
+     * @Description: Parse and Translate a FOR Statement
+     * @param 设定文件
+     * @return void 返回类型
+     * @throws
      */
     public void doFor() {
         String label1 = null;
@@ -441,14 +628,14 @@ public class Cradle {
         // clean up the stack
         emitLn("ADDQ #2,SP");
     }
-    
+
     /**
      * 
-    * @Title: doDo 
-    * @Description: Parse and Translate a DO Statement
-    * @param     设定文件 
-    * @return void    返回类型 
-    * @throws
+     * @Title: doDo
+     * @Description: Parse and Translate a DO Statement
+     * @param 设定文件
+     * @return void 返回类型
+     * @throws
      */
     public void doDo() {
         String label1 = null;
@@ -468,14 +655,14 @@ public class Cradle {
         postLabel(label2);
         emitLn("ADDQ #2,SP");
     }
-    
+
     /**
      * 
-    * @Title: doBreak 
-    * @Description: Recognize and Translate a BREAK
-    * @param @param label    设定文件 
-    * @return void    返回类型 
-    * @throws
+     * @Title: doBreak
+     * @Description: Recognize and Translate a BREAK
+     * @param @param label 设定文件
+     * @return void 返回类型
+     * @throws
      */
     public void doBreak(String label) {
         match('b');
@@ -485,15 +672,15 @@ public class Cradle {
             abort("No loop to break from");
         }
     }
-  
+
     /**
      * 
-    * @Title: block 
-    * @Description: Recognize and Translate a Statement Block
-    * @param @param label   pass into  block function  the  exit  address  of  the
-innermost loop
-    * @return void    返回类型 
-    * @throws
+     * @Title: block
+     * @Description: Recognize and Translate a Statement Block
+     * @param @param label pass into block function the exit address of the
+     *        innermost loop
+     * @return void 返回类型
+     * @throws
      */
     public void block(String label) {
         while (lookAhead != 'e' && lookAhead != 'l' && lookAhead != 'u') {
@@ -565,6 +752,6 @@ innermost loop
     public static void main(String[] args) {
         Cradle cradle = new Cradle();
         cradle.init();
-        cradle.program();
+        cradle.booleanExpression();
     }
 }

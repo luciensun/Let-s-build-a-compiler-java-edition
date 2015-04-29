@@ -77,7 +77,7 @@ grammar this way:
 
 
   <expression>    ::= <term> [<addop> <term>]*
-  <term>          ::= <signed factor> [<mulop> factor]*
+  <term>          ::= <signed factor> [<mulop> <factor>]*
   <signed factor> ::= [<addop>] <factor>
   <factor>        ::= <integer> | <variable> | (<expression>)
 
@@ -393,8 +393,6 @@ adding into the main program the print statement
    WriteLn(GetBoolean);
 
 
-
-
 OK, compile the program and test it.   As  usual,  it's  not very
 impressive so far, but it soon will be.
 
@@ -452,8 +450,6 @@ begin
 end;
 
 
-
-
 {--------------------------------------------------------------}
 { Recognize and Translate an Exclusive Or }
 
@@ -509,8 +505,6 @@ Rename the current procedure BoolTerm to NotFactor, and enter the
 following new version of BoolTerm.  Note that is is  much simpler
 than  the  numeric  version,  since  there  is  no equivalent  of
 division.
-
-
 
 
 {---------------------------------------------------------------}
@@ -585,7 +579,6 @@ agreed  upon.    The compiler itself can't  tell  the  difference
 between a Boolean variable  or  expression  and an arithmetic one
 ... all of those will be handled by Relation, either way.
 
-
 Of course, it would help to have some code for Relation.  I don't
 feel comfortable, though,  adding  any  more  code  without first
 checking out what we already have.  So for now let's just write a
@@ -641,8 +634,6 @@ this on the 68000, things get a a little bit tricky.
 
 Since the loop constructs operate only on the flags, it  would be
 nice (and also quite  efficient)  just to set up those flags, and
-
-
 not load  anything  into  D0  at all.  This would be fine for the
 loops  and  branches,  but remember that the relation can be used
 ANYWHERE a Boolean factor could be  used.   We may be storing its

@@ -133,8 +133,6 @@ the code dependent upon the target machine.  In this installment, we'll
 be continuing with the development of the functions in these two all-
 important units. 
  
- 
-
 
 JUST LIKE CLASSICAL? 
  
@@ -396,7 +394,7 @@ and consider only expressions with additive terms in them.  The
 code to implement expressions, including a possibly signed first 
 term, is shown next: 
  
- 
+
 {--------------------------------------------------------------} 
 { Parse and Translate an Expression } 
  
@@ -415,7 +413,7 @@ end;
 This procedure calls two other procedures to process the 
 operations: 
  
- 
+
 {--------------------------------------------------------------} 
 { Parse and Translate an Addition Operation } 
  
@@ -427,7 +425,7 @@ begin
 	PopAdd; 
 end; 
  
- 
+
 {--------------------------------------------------------------} 
 { Parse and Translate a Subtraction Operation } 
  
@@ -448,7 +446,6 @@ PopAdd and PopSub pop the top of the stack again, and add it to, or
 subtract it from, the primary register.  The code is shown next: 
  
  
-
 
 {--------------------------------------------------------------} 
 { Push Primary to Stack } 
