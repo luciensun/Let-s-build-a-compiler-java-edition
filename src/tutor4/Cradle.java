@@ -283,7 +283,7 @@ public class Cradle {
             match(')');
             emitLn("BSR " + name);
         } else {
-            emitLn("MOVE " + getName() + "(PC),D0");
+            emitLn("MOVE " + name + "(PC),D0");
         }
     }
 

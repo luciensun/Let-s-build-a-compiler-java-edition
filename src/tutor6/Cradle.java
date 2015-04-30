@@ -12,6 +12,7 @@ public class Cradle {
     // Constant Declarations
     private final static char TAB = '\t';
     private final static char CR = '\r';
+    private final static char LF = '\n';
     // Variable Declarations
 
     // Lookahead Character
@@ -141,12 +142,12 @@ public class Cradle {
 
     /**
      * 
-    * @Title: isOrOp 
-    * @Description: Recognize a Boolean Orop
-    * @param @param c
-    * @param @return    设定文件 
-    * @return boolean    返回类型 
-    * @throws
+     * @Title: isOrOp
+     * @Description: Recognize a Boolean Orop
+     * @param @param c
+     * @param @return 设定文件
+     * @return boolean 返回类型
+     * @throws
      */
     public boolean isOrOp(char c) {
         if (c == '|' || c == '~') {
@@ -155,34 +156,34 @@ public class Cradle {
             return false;
         }
     }
-    
+
     /**
      * 
-    * @Title: isRelOp 
-    * @Description: Recognize a Relop
-    * @param @param c
-    * @param @return    设定文件 
-    * @return boolean    返回类型 
-    * @throws
-     */
-    public boolean isRelOp(char c) {
-        if (c == '=' || c =='#' || c == '<' || c =='>') {
-            return true;
-        } else {
-            return false;
-        }
-    }
-    
-    /**
-     * 
-     * @Title: isAddop
-     * @Description: Recognize an Addop
+     * @Title: isRelOp
+     * @Description: Recognize a Relop
      * @param @param c
      * @param @return 设定文件
      * @return boolean 返回类型
      * @throws
      */
-    public boolean isAddop(char c) {
+    public boolean isRelOp(char c) {
+        if (c == '=' || c == '#' || c == '<' || c == '>') {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * 
+     * @Title: isAddOp
+     * @Description: Recognize an AddOp
+     * @param @param c
+     * @param @return 设定文件
+     * @return boolean 返回类型
+     * @throws
+     */
+    public boolean isAddOp(char c) {
         if (c == '+' || c == '-') {
             return true;
         } else {
@@ -217,6 +218,22 @@ public class Cradle {
      */
     public void skipWhite() {
         while (isWhite(lookAhead)) {
+            getChar();
+        }
+    }
+    
+    /**
+     * 
+    * @Title: fin 
+    * @Description: Skip a CRLF
+    * @param     设定文件 
+    * @return void    返回类型 
+    * @throws
+     */
+    public void fin() {
+        if (lookAhead == CR) {
+            getChar();
+        } else if (lookAhead == LF) {
             getChar();
         }
     }
@@ -260,11 +277,11 @@ public class Cradle {
 
     /**
      * 
-    * @Title: getBoolean 
-    * @Description: Get a Boolean Literal
-    * @param @return    设定文件 
-    * @return boolean    返回类型 
-    * @throws
+     * @Title: getBoolean
+     * @Description: Get a Boolean Literal
+     * @param @return 设定文件
+     * @return boolean 返回类型
+     * @throws
      */
     public boolean getBoolean() {
         char ch = lookAhead;
@@ -276,6 +293,176 @@ public class Cradle {
             getChar();
         }
         return bVal;
+    }
+
+    /**
+     * 
+     * @Title: ident
+     * @Description: Parse and Translate an Identifier
+     * @param 设定文件
+     * @return void 返回类型
+     * @throws
+     */
+    public void ident() {
+        char name;
+        name = getName();
+        if (lookAhead == '(') {
+            match('(');
+            match(')');
+            emitLn("BSR " + name);
+        } else {
+            emitLn("MOVE " + name + "(PC),D0");
+        }
+    }
+
+    /**
+     * 
+     * @Title: factor
+     * @Description: Parse and Translate a Math Factor
+     * @param 设定文件
+     * @return void 返回类型
+     * @throws
+     */
+    public void factor() {
+        if (lookAhead == '(') {
+            match('(');
+            expression();
+            match(')');
+        } else if (isAlpha(lookAhead)) {
+            ident();
+        } else {
+            emitLn("MOVE #" + getNum() + ",D0");
+        }
+    }
+
+    /**
+     * 
+     * @Title: signedFactor
+     * @Description: Parse and Translate the First Math Factor
+     * @param 设定文件
+     * @return void 返回类型
+     * @throws
+     */
+    public void signedFactor() {
+        if (lookAhead == '+') {
+            getChar();
+            factor();
+        } else if (lookAhead == '-') {
+            getChar();
+            if (isDigit(lookAhead)) {
+                emitLn("MOVE #-" + getNum() + ", D0");
+            } else {
+                factor();
+                emitLn("NEG D0");
+            }
+        } else {
+            factor();
+        }
+    }
+
+    /**
+     * 
+     * @Title: muls
+     * @Description: Recognize and Translate a Multiply
+     * @param 设定文件
+     * @return void 返回类型
+     * @throws
+     */
+    public void multiply() {
+        match('*');
+        factor();
+        emitLn("MULS (SP)+,D0");
+    }
+
+    /**
+     * 
+     * @Title: divide
+     * @Description: Recognize and Translate a Divide
+     * @param 设定文件
+     * @return void 返回类型
+     * @throws
+     */
+    public void divide() {
+        match('/');
+        factor();
+        emitLn("MOVE (SP)+,D1");
+        emitLn("EXS.L D0");
+        emitLn("DIVS D1,D0");
+    }
+
+    /**
+     * 
+     * @Title: term
+     * @Description: Parse and Translate a Math Term
+     * @param 设定文件
+     * @return void 返回类型
+     * @throws
+     */
+    public void term() {
+        signedFactor();
+        while (lookAhead == '*' || lookAhead == '/') {
+            emitLn("MOVE D0,-(SP)");
+            switch (lookAhead) {
+            case '*':
+                multiply();
+                break;
+            case '/':
+                divide();
+                break;
+            }
+        }
+    }
+
+    /**
+     * 
+     * @Title: add
+     * @Description: Recognize and Translate an Add
+     * @param 设定文件
+     * @return void 返回类型
+     * @throws
+     */
+    public void add() {
+        match('+');
+        term();
+        emitLn("ADD (SP)+, D0");
+    }
+
+    /**
+     * 
+     * @Title: subtract
+     * @Description: Recognize and Translate a Subtract
+     * @param 设定文件
+     * @return void 返回类型
+     * @throws
+     */
+    public void subtract() {
+        match('-');
+        term();
+        emitLn("SUB (SP)+, D0");
+        emitLn("NEG D0");
+    }
+
+    /**
+     * 
+     * @Title: expression
+     * @Description: Parse and Translate an Expression
+     * @param 设定文件
+     * @return void 返回类型
+     * @throws
+     */
+    public void expression() {
+        term();
+        while (isAddOp(lookAhead)) {
+            emitLn("MOVE D0,-(SP)");
+            switch (lookAhead) {
+            case '+':
+                add();
+                break;
+            case '-':
+                subtract();
+                break;
+            }
+        }
     }
 
     /**
@@ -345,24 +532,101 @@ public class Cradle {
 
     /**
      * 
-    * @Title: relation 
-    * @Description: Parse and Translate a Relation
-    * @param     设定文件 
-    * @return void    返回类型 
-    * @throws
+     * @Title: equals
+     * @Description: Recognize and Translate a Relational "Equals"
+     * @param 设定文件
+     * @return void 返回类型
+     * @throws
      */
-    public void relation() {
-        emitLn("<Relation>");
-        getChar();
+    public void equals() {
+        match('=');
+        expression();
+        emitLn("CMP (SP)+, D0");
+        emitLn("SEQ D0");
     }
-    
+
     /**
      * 
-    * @Title: booleanFactor 
-    * @Description: Parse and Translate a Boolean Factor
-    * @param     设定文件 
-    * @return void    返回类型 
-    * @throws
+     * @Title: notEquals
+     * @Description: Recognize and Translate a Relational "Not Equals"
+     * @param 设定文件
+     * @return void 返回类型
+     * @throws
+     */
+    public void notEquals() {
+        match('#');
+        expression();
+        emitLn("CMP (SP)+, D0");
+        emitLn("SNE D0");
+    }
+
+    /**
+     * 
+     * @Title: less
+     * @Description: Recognize and Translate a Relational "Less Than"
+     * @param 设定文件
+     * @return void 返回类型
+     * @throws
+     */
+    public void less() {
+        match('<');
+        expression();
+        emitLn("CMP (SP)+, D0");
+        emitLn("SGE D0");
+    }
+
+    /**
+     * 
+     * @Title: greater
+     * @Description: Recognize and Translate a Relational "Greater Than"
+     * @param 设定文件
+     * @return void 返回类型
+     * @throws
+     */
+    public void greater() {
+        match('>');
+        expression();
+        emitLn("CMP (SP)+, D0");
+        emitLn("SLE D0");
+    }
+
+    /**
+     * 
+     * @Title: relation
+     * @Description: Parse and Translate a Relation
+     * @param 设定文件
+     * @return void 返回类型
+     * @throws
+     */
+    public void relation() {
+        expression();
+        if (isRelOp(lookAhead)) {
+            emitLn("MOVE D0, -(SP)");
+            switch (lookAhead) {
+            case '=':
+                equals();
+                break;
+            case '#':
+                notEquals();
+                break;
+            case '<':
+                less();
+                break;
+            case '>':
+                greater();
+                break;
+            }
+            emitLn("TST D0");
+        }
+    }
+
+    /**
+     * 
+     * @Title: booleanFactor
+     * @Description: Parse and Translate a Boolean Factor
+     * @param 设定文件
+     * @return void 返回类型
+     * @throws
      */
     public void booleanFactor() {
         if (isBoolean(lookAhead)) {
@@ -376,113 +640,111 @@ public class Cradle {
         }
 
     }
-    
+
     /**
      * 
-    * @Title: notFactor 
-    * @Description: Parse and Translate a Boolean Factor with NOT
-    * @param     设定文件 
-    * @return void    返回类型 
-    * @throws
+     * @Title: notFactor
+     * @Description: Parse and Translate a Boolean Factor with NOT
+     * @param 设定文件
+     * @return void 返回类型
+     * @throws
      */
     public void notFactor() {
         if (lookAhead == '!') {
             match('!');
             booleanFactor();
-            emitLn("EOR #-1,D0");    
+            emitLn("EOR #-1,D0");
         } else {
             booleanFactor();
         }
     }
-    
+
     /**
      * 
-     * @Title: condition
-     * @Description: Parse and Translate a Boolean Condition
+     * @Title: booleanTerm
+     * @Description: Parse and Translate a Boolean Term
      * @param 设定文件
      * @return void 返回类型
      * @throws
      */
-    public void condition() {
-        emitLn("<condition>");
-    }
-
-    /**
-     * 
-    * @Title: booleanTerm 
-    * @Description: Parse and Translate a Boolean Term
-    * @param     设定文件 
-    * @return void    返回类型 
-    * @throws
-     */
     public void booleanTerm() {
         notFactor();
-        while(lookAhead == '&') {
+        while (lookAhead == '&') {
             emitLn("MOVE D0,-(SP)");
             match('&');
             notFactor();
             emitLn("AND (SP)+, D0");
         }
     }
+
     /**
      * 
-    * @Title: booleanOr 
-    * @Description: Recognize and Translate a Boolean OR
-    * @param     设定文件 
-    * @return void    返回类型 
-    * @throws
+     * @Title: booleanOr
+     * @Description: Recognize and Translate a Boolean OR
+     * @param 设定文件
+     * @return void 返回类型
+     * @throws
      */
     public void booleanOr() {
         match('|');
         booleanTerm();
         emitLn("OR (SP)+, D0");
     }
-    
+
     /**
      * 
-    * @Title: booleanXor 
-    * @Description: Recognize and Translate an Exclusive Or
-    * @param     设定文件 
-    * @return void    返回类型 
-    * @throws
+     * @Title: booleanXor
+     * @Description: Recognize and Translate an Exclusive Or
+     * @param 设定文件
+     * @return void 返回类型
+     * @throws
      */
     public void booleanXor() {
         match('~');
         booleanTerm();
         emitLn("EOR (SP)+, D0");
     }
-    
+
     /**
      * 
-     * @Title: expression
-     * @Description: Parse and Translate a Math Expression
+     * @Title: booleanExpression
+     * @Description: Parse and Translate a Boolean Expression
      * @param 设定文件
      * @return void 返回类型
      * @throws
      */
-    public void expression() {
-        emitLn("<expr>");
-    }
-    
-    /**
-     * 
-    * @Title: booleanExpression 
-    * @Description: Parse and Translate a Boolean Expression
-    * @param     设定文件 
-    * @return void    返回类型 
-    * @throws
-     */
     public void booleanExpression() {
         booleanTerm();
-        while(isOrOp(lookAhead)) {
+        while (isOrOp(lookAhead)) {
             emitLn("MOVE D0,-(SP)");
-            switch(lookAhead) {
-            case '|': booleanOr();break;
-            case '~': booleanXor();break;
+            switch (lookAhead) {
+            case '|':
+                booleanOr();
+                break;
+            case '~':
+                booleanXor();
+                break;
             }
         }
     }
 
+    /**
+     * 
+    * @Title: assignment 
+    * @Description: Parse and Translate an Assignment Statement
+    * @param     设定文件 
+    * @return void    返回类型 
+    * @throws
+     */
+    public void assignment() {
+        char name;
+        name = getName();
+        match('=');
+        booleanExpression();
+        emitLn("LEA " + name + "(PC),A0");
+        emitLn("MOVE D0, (A0)");
+    }
+    
     /**
      * 
      * @Title: doIf
@@ -497,7 +759,7 @@ public class Cradle {
         match('i');
         label1 = newLabel();
         label2 = label1;
-        condition();
+        booleanExpression();
         emitLn("BEQ " + label1);
         block(label);
         if (lookAhead == 'l') {
@@ -526,7 +788,7 @@ public class Cradle {
         label1 = newLabel();
         label2 = newLabel();
         postLabel(label1);
-        condition();
+        booleanExpression();
         emitLn("BEQ " + label2);
         block(label2);
         match('e');
@@ -572,7 +834,7 @@ public class Cradle {
         postLabel(label1);
         block(label2);
         match('u');
-        condition();
+        booleanExpression();
         emitLn("BEQ " + label1);
         postLabel(label2);
     }
@@ -684,6 +946,7 @@ public class Cradle {
      */
     public void block(String label) {
         while (lookAhead != 'e' && lookAhead != 'l' && lookAhead != 'u') {
+            fin();
             switch (lookAhead) {
             case 'i':
                 doIf(label);
@@ -709,6 +972,7 @@ public class Cradle {
             default:
                 other();
             }
+            fin();
         }
     }
 
@@ -752,6 +1016,6 @@ public class Cradle {
     public static void main(String[] args) {
         Cradle cradle = new Cradle();
         cradle.init();
-        cradle.booleanExpression();
+        cradle.program();
     }
 }

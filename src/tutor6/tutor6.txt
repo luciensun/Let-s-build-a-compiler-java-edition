@@ -764,8 +764,6 @@ arithmetic procedures below.  If  you're  observant,  you'll also
 see that I've changed them a little to make  them  correspond  to
 the latest version of the syntax.  This change is  NOT necessary,
 so  you  may  prefer  to  hold  off  on  that  until you're  sure
-
-
 everything is working.
 
 
@@ -807,7 +805,6 @@ end;
 
 {---------------------------------------------------------------}
 { Parse and Translate the First Math Factor }
-
 
 procedure SignedFactor;
 begin
@@ -891,8 +888,6 @@ begin
 end;
 
 
-
-
 {---------------------------------------------------------------}
 { Parse and Translate an Expression }
 
@@ -956,8 +951,6 @@ real assignment statements.    We've already done that before, so
 it won't be too hard.   Before  taking that step, though, we need
 to fix something else.
 
-
-
 We're soon going to find  that the one-line "programs" that we're
 having to write here will really cramp our style.  At  the moment
 we  have  no  cure for that, because our parser doesn't recognize
@@ -1020,7 +1013,6 @@ begin
  end;
 end;
 {--------------------------------------------------------------}
-
 
 
 Now, you'll find that you  can use multiple-line "programs."  The
