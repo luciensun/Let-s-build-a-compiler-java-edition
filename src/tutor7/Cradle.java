@@ -422,7 +422,6 @@ public class Cradle {
      * @throws
      */
     public void scanner() {
-        int k;
 
         // If you want your language to be truly free-field,
         // then newlines should be transparent.
@@ -519,19 +518,6 @@ public class Cradle {
         System.out.println("");
     }
 
-    /**
-     * 
-     * @Title: other
-     * @Description: Recognize and Translate an "Other"
-     * @param 设定文件
-     * @return void 返回类型
-     * @throws
-     */
-    public void other() {
-        emitLn(String.valueOf(getName()));
-    }
-
-   
     /**
      * 
      * @Title: init

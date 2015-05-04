@@ -748,7 +748,7 @@ public class Cradle {
     /**
      * 
      * @Title: doIf
-     * @Description: TODO(这里用一句话描述这个方法的作用)
+     * @Description: Recognize and Translate an IF Construct
      * @param @param label 设定文件
      * @return void 返回类型
      * @throws
