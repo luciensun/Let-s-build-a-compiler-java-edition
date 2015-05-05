@@ -1,11 +1,11 @@
-package tutor7;
+package tutor9;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * tutor 7 LEXICAL SCANNING
+ * tutor 9 A TOP VIEW
  * 
  * @author lucienSun
  *
@@ -25,26 +25,6 @@ public class Cradle {
     private List<String> symTab;
 
     private List<String> keywordList;
-
-    private enum Symbol {
-        IF_SYMBOL, ELSE_SYMBOL, ENDIF_SYMBOL, END_SYMBOL, IDENT, NUMBER, OPERATOR;
-        public void write() {
-            switch(this) {
-            case IF_SYMBOL:
-            case ELSE_SYMBOL:
-            case ENDIF_SYMBOL:
-            case END_SYMBOL:System.out.print("Keyword ");break;
-            case IDENT:System.out.print("Ident ");break;
-            case NUMBER:System.out.print("Number ");break;
-            case OPERATOR:System.out.print("Operator ");break;
-            }
-        }
-    }
-
-    // Current Token
-    private Symbol token;
-    // String Token of Look
-    private String tokenVal;
 
     /**
      * 
@@ -301,42 +281,32 @@ public class Cradle {
 
     /**
      * 
-    * @Title: getName 
-    * @Description: Get an Identifier
-    * @param     设定文件 
-    * @return void    返回类型 
-    * @throws
+     * @Title: getName
+     * @Description: Get an Identifier
+     * @param @return 设定文件
+     * @return char 返回类型
+     * @throws
      */
-    public void getName() {
-        StringBuffer buffer = new StringBuffer("");
-        int k;
-        
+    public char getName() {
+        char ch;
+
         if (!isAlpha(lookAhead)) {
             expected("Name");
         }
 
-        while (isAlNum(lookAhead)) {
-            buffer.append(lookAhead);
-            getChar();
-        }
-        tokenVal = buffer.toString();
-        
-        k = lookup(keywordList, tokenVal);
-        if (k == -1) {
-            token = Symbol.IDENT;
-        } else {
-            token = Symbol.values()[k];
-        }
+        ch = lookAhead;
+        getChar();
 
+        return ch;
     }
 
     /**
      * 
-    * @Title: getNum 
-    * @Description: Get a Number
-    * @param     设定文件 
-    * @return void    返回类型 
-    * @throws
+     * @Title: getNum
+     * @Description: Get a Number
+     * @param 设定文件
+     * @return void 返回类型
+     * @throws
      */
     public void getNum() {
         StringBuffer buffer = new StringBuffer("");
@@ -349,17 +319,16 @@ public class Cradle {
             buffer.append(lookAhead);
             getChar();
         }
-        tokenVal = buffer.toString();
-        token = Symbol.NUMBER;
+
     }
 
     /**
      * 
-    * @Title: getOp 
-    * @Description: Get an Operator
-    * @param     设定文件 
-    * @return void    返回类型 
-    * @throws
+     * @Title: getOp
+     * @Description: Get an Operator
+     * @param 设定文件
+     * @return void 返回类型
+     * @throws
      */
     public void getOp() {
         StringBuffer buffer = new StringBuffer("");
@@ -372,8 +341,7 @@ public class Cradle {
             buffer.append(lookAhead);
             getChar();
         }
-        tokenVal = buffer.toString();
-        token = Symbol.OPERATOR;
+
     }
 
     /**
@@ -435,8 +403,6 @@ public class Cradle {
         } else if (isOp(lookAhead)) {
             getOp();
         } else {
-            tokenVal = String.valueOf(lookAhead);
-            token = Symbol.OPERATOR;
             getChar();
         }
         skipComma();
@@ -541,6 +507,24 @@ public class Cradle {
 
     /**
      * 
+    * @Title: program 
+    * @Description: Parse and Translate A Program
+    * @param     设定文件 
+    * @return void    返回类型 
+    * @throws
+     */
+    public void program() {
+        char name;
+        // Handles program header part
+        match('p');
+        name = getName();
+        prolog(name);
+        match('.');
+        epilog(name);
+    }
+
+    /**
+     * 
      * @Title: main
      * @Description: Main Program(aka entry point)
      * @param 设定文件
@@ -550,12 +534,6 @@ public class Cradle {
     public static void main(String[] args) {
         Cradle cradle = new Cradle();
         cradle.init();
-
-        do {
-            cradle.scanner();
-            cradle.token.write();
-            System.out.println("output is:-->" + cradle.tokenVal);
-        } while (cradle.token != Symbol.END_SYMBOL);
 
     }
 }

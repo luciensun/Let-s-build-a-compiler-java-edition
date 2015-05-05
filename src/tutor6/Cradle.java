@@ -3,7 +3,7 @@ package tutor6;
 import java.io.IOException;
 
 /**
- * tutor 5 CONTROL CONSTRUCTS
+ * tutor 6 BOOLEAN EXPRESSIONS
  * 
  * @author lucienSun
  *
