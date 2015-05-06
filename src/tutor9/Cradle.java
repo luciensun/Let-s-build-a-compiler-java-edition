@@ -486,6 +486,18 @@ public class Cradle {
 
     /**
      * 
+     * @Title: postLabel
+     * @Description: Post a Label To Output
+     * @param @param label 设定文件
+     * @return void 返回类型
+     * @throws
+     */
+    public void postLabel(char label) {
+        System.out.println(label + ":");
+    }
+
+    /**
+     * 
      * @Title: init
      * @Description: Initialize
      * @param 设定文件
@@ -504,23 +516,117 @@ public class Cradle {
 
         getChar();
     }
+    
+    // Process Label Statement
+    public void labels() {
+        match('l');
+    }
+    
+    // Process Const Statement
+    public void constants() {
+        match('c');
+    }
+    
+    // Process Type Statement
+    public void types() {
+        match('t');
+    }
+    
+    // Process Var Statement
+    public void variables() {
+        match('v');
+    }
+    
+    // Process Procedure Definition
+    public void doProcedure() {
+        match('p');
+    }
+    
+    // Process Function Definition
+    public void doFunction() {
+        match('f');
+    }
+    
+    // Parse and Translate the Declaration Part
+    public void declarations() {
+        while (lookAhead == 'l' || lookAhead == 'c' || lookAhead == 't'
+                || lookAhead == 'v' || lookAhead == 'p' || lookAhead == 'f') {
+            switch(lookAhead) {
+            case 'l':labels();break;
+            case 'c':constants();break;
+            case 't':types();break;
+            case 'v':variables();break;
+            case 'p':doProcedure();break;
+            case 'f':doFunction();break;
+            }
+        }
+    }
+
+    // Parse and Translate the Statement Part
+    public void statements() {
+        match('b');
+        while (lookAhead != 'e') {
+            getChar();
+        }
+        match('e');
+    }
 
     /**
      * 
-    * @Title: program 
-    * @Description: Parse and Translate A Program
-    * @param     设定文件 
-    * @return void    返回类型 
-    * @throws
+     * @Title: doBlock
+     * @Description: Parse and Translate a Pascal Block
+     * @param @param name 设定文件
+     * @return void 返回类型
+     * @throws
+     */
+    public void doBlock(char name) {
+        declarations();
+        postLabel(name);
+        statements();
+    }
+
+    /**
+     * 
+     * @Title: program
+     * @Description: Parse and Translate A Program
+     * @param 设定文件
+     * @return void 返回类型
+     * @throws
      */
     public void program() {
         char name;
         // Handles program header part
         match('p');
         name = getName();
-        prolog(name);
+        prolog();
+        doBlock(name);
         match('.');
         epilog(name);
+    }
+
+    /**
+     * 
+     * @Title: prolog
+     * @Description: Write the Prolog
+     * @param 设定文件
+     * @return void 返回类型
+     * @throws
+     */
+    public void prolog() {
+        emitLn("WARMST EQU $A01E");
+    }
+
+    /**
+     * 
+     * @Title: epilog
+     * @Description: Write the Epilog
+     * @param @param name 设定文件
+     * @return void 返回类型
+     * @throws
+     */
+    public void epilog(char name) {
+        emitLn("DC WARMST");
+        emitLn("END " + name);
     }
 
     /**
@@ -534,6 +640,7 @@ public class Cradle {
     public static void main(String[] args) {
         Cradle cradle = new Cradle();
         cradle.init();
+        cradle.program();
 
     }
 }

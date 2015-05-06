@@ -134,7 +134,7 @@ var  Name: char;
 begin
    Match('p');            { Handles program header part }
    Name := GetName;
-   Prolog(Name);
+   Prolog;
    Match('.');
    Epilog(Name);
 end;
