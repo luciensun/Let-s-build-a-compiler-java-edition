@@ -10,7 +10,7 @@ import java.util.List;
  * @author lucienSun
  *
  */
-public class Cradle {
+public class CradleForC {
     // Constant Declarations
     private final static char TAB = '\t';
     private final static char CR = '\r';
@@ -638,7 +638,7 @@ public class Cradle {
      * @throws
      */
     public static void main(String[] args) {
-        Cradle cradle = new Cradle();
+        CradleForC cradle = new CradleForC();
         cradle.init();
         cradle.program();
 
