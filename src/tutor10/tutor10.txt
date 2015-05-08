@@ -149,7 +149,7 @@ for, make this very easy to do.   But  this  doesn't  really make
 much sense in view of the Pascal-like requirement  that  all data
 and procedures  be declared before they're referenced.  Since the
 main  program can only call procedures  that  have  already  been
-declared, the only position that makes sense is at the end,  a la
+declared, the only position that makes sense is at the end,  like
 Pascal.
 
 Given  the  BNF  above, let's write a parser that just recognizes

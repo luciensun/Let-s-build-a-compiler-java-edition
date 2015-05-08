@@ -21,6 +21,12 @@ public class CradleForC {
     private char lookAhead;
     // Label Counter
     private int lCount;
+    
+    private char tClass;
+    
+    private char sign;
+    
+    private char type;
 
     private List<String> symTab;
 
@@ -517,73 +523,32 @@ public class CradleForC {
         getChar();
     }
     
-    // Process Label Statement
-    public void labels() {
-        match('l');
+    // Get a Storage Class Specifier
+    public void getTClass() {
+        if (lookAhead == 'a' || lookAhead == 'x' || lookAhead == 's') {
+            tClass = lookAhead;
+            getChar();      
+        } else {
+            tClass = 'a';
+        }
     }
     
-    // Process Const Statement
-    public void constants() {
-        match('c');
+    // Get a Type Specifier
+    public void getType() {
+        type = ' ';
+        if (lookAhead == 'u') {
+            sign = 'u';
+            type = 'i';
+            getChar();
+        }
+        
     }
     
     // Process Type Statement
-    public void types() {
+    public void topDecl() {
         match('t');
     }
-    
-    // Process Var Statement
-    public void variables() {
-        match('v');
-    }
-    
-    // Process Procedure Definition
-    public void doProcedure() {
-        match('p');
-    }
-    
-    // Process Function Definition
-    public void doFunction() {
-        match('f');
-    }
-    
-    // Parse and Translate the Declaration Part
-    public void declarations() {
-        while (lookAhead == 'l' || lookAhead == 'c' || lookAhead == 't'
-                || lookAhead == 'v' || lookAhead == 'p' || lookAhead == 'f') {
-            switch(lookAhead) {
-            case 'l':labels();break;
-            case 'c':constants();break;
-            case 't':types();break;
-            case 'v':variables();break;
-            case 'p':doProcedure();break;
-            case 'f':doFunction();break;
-            }
-        }
-    }
 
-    // Parse and Translate the Statement Part
-    public void statements() {
-        match('b');
-        while (lookAhead != 'e') {
-            getChar();
-        }
-        match('e');
-    }
-
-    /**
-     * 
-     * @Title: doBlock
-     * @Description: Parse and Translate a Pascal Block
-     * @param @param name 设定文件
-     * @return void 返回类型
-     * @throws
-     */
-    public void doBlock(char name) {
-        declarations();
-        postLabel(name);
-        statements();
-    }
 
     /**
      * 
@@ -594,14 +559,12 @@ public class CradleForC {
      * @throws
      */
     public void program() {
-        char name;
-        // Handles program header part
-        match('p');
-        name = getName();
-        prolog();
-        doBlock(name);
-        match('.');
-        epilog(name);
+
+        while ((int)lookAhead != -1) {
+            getTClass();
+            getType();
+            topDecl();
+        }
     }
 
     /**
