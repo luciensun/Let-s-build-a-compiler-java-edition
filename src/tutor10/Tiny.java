@@ -27,6 +27,7 @@ public class Tiny {
     // symbol Table
     List<Character> symbolTable = null;
 
+    // Here begins the code generation routines, we use it to retarget the cpu
     // Clear the Primary Register
     public void clear() {
         emitLn("CLR D0");
@@ -92,7 +93,56 @@ public class Tiny {
     public void undefined(String variable) {
         abort("Undefined Identifier " + variable);
     }
+    
+    // Complement the Primary Register
+    public void notIt() {
+        emitLn("NOT D0");
+    }
+    
+    // AND Top of Stack with Primary
+    public void popAnd() {
+        emitLn("AND (SP)+,D0");
+    }
+    
+    // OR Top of Stack with Primary
+    public void popOr() {
+        emitLn("OR (SP)+,D0");
+    }
 
+    // XOR Top of Stack with Primary
+    public void popXor() {
+        emitLn("EOR (SP)+,D0");
+    }
+    
+    // Compare Top of Stack with Primary
+    public void popCompare() {
+        emitLn("CMP (SP)+,D0");
+    }
+    
+    // Set D0 If Compare was =
+    public void setEqual() {
+        emitLn("SEQ D0");
+        emitLn("EXT D0");
+    }
+    
+    // Set D0 If Compare was !=
+    public void setNEqual() {
+        emitLn("SNE D0");
+        emitLn("EXT D0");
+    }
+    
+    // Set D0 If Compare was >
+    public void setGreater() {
+        emitLn("SLT D0");
+        emitLn("EXT D0");
+    }
+    
+    // Set D0 If Compare was < 
+    public void setLess() {
+        emitLn("SGT D0");
+        emitLn("EXT D0");
+    }
+    
     // Read New Character From Input Stream
     public void getChar() {
         try {
@@ -157,6 +207,24 @@ public class Tiny {
     // Recognize a Mulop
     public boolean isMulop(char c) {
         if (c == '*' || c == '/') {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
+    // Recognize a Boolean Orop
+    public boolean isOrop(char c) {
+        if (c == '|' || c == '~') {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
+    // Recognize a Relop
+    public boolean isRelop(char c) {
+        if (c == '=' || c == '#' || c == '<' || c == '>') {
             return true;
         } else {
             return false;
@@ -293,7 +361,99 @@ public class Tiny {
             }
         }
     }
+    
+    // Recognize and Translate a Relational "Equals"
+    public void equals() {
+        match('=');
+        expression();
+        popCompare();
+        setEqual();
+    }
+    
+    // Recognize and Translate a Relational "Not Equals" 
+    public void notEquals() {
+        match('#');
+        expression();
+        popCompare();
+        setNEqual();
+    }
+    
+    // Recognize and Translate a Relational "Less Than"
+    public void less() {
+        match('<');
+        expression();
+        popCompare();
+        setLess();
+    }
 
+    // Recognize and Translate a Relational "Greater Than"
+    public void greater() {
+        match('>');
+        expression();
+        popCompare();
+        setGreater();
+    }
+    
+    // Parse and Translate a Relation
+    public void relation() {
+        expression();
+        if (isRelop(lookAhead)) {
+            push();
+            switch(lookAhead) {
+            case '=': equals();break;
+            case '#':notEquals();break;
+            case '<':less();break;
+            case '>':greater();break;
+            }
+        }
+    }
+    
+    // Parse and Translate a Boolean Factor with Leading NOT
+    public void notFactor() {
+        if (lookAhead == '!') {
+            match('!');
+            relation();
+            notIt();
+        }
+    }
+    
+    // Parse and Translate a Boolean Term
+    public void boolTerm() {
+        notFactor();
+        while (lookAhead == '&') {
+            push();
+            match('&');
+            notFactor();
+            popAnd();
+        }
+    }
+    
+    // Recognize and Translate a Boolean OR
+    public void boolOr() {
+        match('|');
+        boolTerm();
+        popOr();
+    }
+    
+    // Recognize and Translate an Exclusive Or
+    public void boolXor() {
+        match('~');
+        boolTerm();
+        popXor();
+    }
+    
+    // Parse and Translate a Boolean Expression
+    public void boolExpression() {
+        boolTerm();
+        while (isOrop(lookAhead)) {
+            push();
+            switch(lookAhead) {
+            case '|':boolOr();break;
+            case '~':boolXor();break;
+            }
+        }
+    }
+    
     // Parse and Translate a Math Factor
     public void factor() {
         if (lookAhead == '(') {
@@ -482,4 +642,8 @@ public class Tiny {
     // <rest> ::= ( <mulop> <factor> )*
     // <first factor> ::= [ <addop> ] <factor>
     // <factor> ::= <var> | <number> | ( <expression> )
+    // <bool-expr> ::= <bool-term> ( <orop> <bool-term> )*
+    // <bool-term> ::= <not-factor> ( <andop> <not-factor> )*
+    // <not-factor> ::= [ '!' ] <relation>
+    // <relation> ::= <expression> [ <relop> <expression> ]
 }
