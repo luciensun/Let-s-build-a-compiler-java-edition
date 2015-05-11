@@ -93,17 +93,17 @@ public class Tiny {
     public void undefined(String variable) {
         abort("Undefined Identifier " + variable);
     }
-    
+
     // Complement the Primary Register
     public void notIt() {
         emitLn("NOT D0");
     }
-    
+
     // AND Top of Stack with Primary
     public void popAnd() {
         emitLn("AND (SP)+,D0");
     }
-    
+
     // OR Top of Stack with Primary
     public void popOr() {
         emitLn("OR (SP)+,D0");
@@ -113,36 +113,47 @@ public class Tiny {
     public void popXor() {
         emitLn("EOR (SP)+,D0");
     }
-    
+
     // Compare Top of Stack with Primary
     public void popCompare() {
         emitLn("CMP (SP)+,D0");
     }
-    
+
     // Set D0 If Compare was =
     public void setEqual() {
         emitLn("SEQ D0");
         emitLn("EXT D0");
     }
-    
+
     // Set D0 If Compare was !=
     public void setNEqual() {
         emitLn("SNE D0");
         emitLn("EXT D0");
     }
-    
+
     // Set D0 If Compare was >
     public void setGreater() {
         emitLn("SLT D0");
         emitLn("EXT D0");
     }
-    
-    // Set D0 If Compare was < 
+
+    // Set D0 If Compare was <
     public void setLess() {
         emitLn("SGT D0");
         emitLn("EXT D0");
     }
-    
+
+    // Branch Unconditional
+    public void branch(String label) {
+        emitLn("BRA " + label);
+    }
+
+    // Branch False
+    public void branchFalse(String label) {
+        emitLn("TST D0");
+        emitLn("BEQ " + label);
+    }
+
     // Read New Character From Input Stream
     public void getChar() {
         try {
@@ -212,7 +223,7 @@ public class Tiny {
             return false;
         }
     }
-    
+
     // Recognize a Boolean Orop
     public boolean isOrop(char c) {
         if (c == '|' || c == '~') {
@@ -221,7 +232,7 @@ public class Tiny {
             return false;
         }
     }
-    
+
     // Recognize a Relop
     public boolean isRelop(char c) {
         if (c == '=' || c == '#' || c == '<' || c == '>') {
@@ -251,9 +262,21 @@ public class Tiny {
             getChar();
         }
     }
+    
+    // Skip Over an End-of-Line
+    public void newLine() {
+        while (lookAhead == CR) {
+            getChar();
+            if (lookAhead == LF) {
+                getChar();
+            }
+            skipWhite();
+        }
+    }
 
     // Match a Specific Input Character
     public void match(char x) {
+        newLine();
         if (lookAhead == x) {
             getChar();
             skipWhite();
@@ -262,19 +285,9 @@ public class Tiny {
         }
     }
 
-    // Skip a CRLF
-    public void fin() {
-        if (lookAhead == CR) {
-            getChar();
-        }
-        if (lookAhead == LF) {
-            getChar();
-        }
-        skipWhite();
-    }
-
     // temporary getName
     public char getName() {
+        newLine();
         char ch = lookAhead;
         if (!isAlpha(lookAhead)) {
             expected("Name");
@@ -286,6 +299,7 @@ public class Tiny {
 
     // Get a Number
     public int getNum() {
+        newLine();
         int val = 0;
         if (!isDigit(lookAhead)) {
             expected("Number");
@@ -296,6 +310,15 @@ public class Tiny {
         }
 
         return val;
+    }
+
+    // Generate a Unique Label in the form of 'Lnn',
+    // where nn is a label number starting from zero.
+    public String newLabel() {
+        String str = null;
+        str = String.valueOf(lCount);
+        lCount++;
+        return "L" + str;
     }
 
     // Post a Label To Output
@@ -351,6 +374,7 @@ public class Tiny {
     // Parse and Translate Global Declarations
     public void topDecls() {
         while (lookAhead != 'b') {
+            newLine();
             switch (lookAhead) {
             case 'v':
                 decl();
@@ -359,9 +383,10 @@ public class Tiny {
                 abort("Unrecognized Keyword '" + lookAhead + "'");
                 break;
             }
+            newLine();
         }
     }
-    
+
     // Recognize and Translate a Relational "Equals"
     public void equals() {
         match('=');
@@ -369,15 +394,15 @@ public class Tiny {
         popCompare();
         setEqual();
     }
-    
-    // Recognize and Translate a Relational "Not Equals" 
+
+    // Recognize and Translate a Relational "Not Equals"
     public void notEquals() {
         match('#');
         expression();
         popCompare();
         setNEqual();
     }
-    
+
     // Recognize and Translate a Relational "Less Than"
     public void less() {
         match('<');
@@ -393,30 +418,40 @@ public class Tiny {
         popCompare();
         setGreater();
     }
-    
+
     // Parse and Translate a Relation
     public void relation() {
         expression();
         if (isRelop(lookAhead)) {
             push();
-            switch(lookAhead) {
-            case '=': equals();break;
-            case '#':notEquals();break;
-            case '<':less();break;
-            case '>':greater();break;
+            switch (lookAhead) {
+            case '=':
+                equals();
+                break;
+            case '#':
+                notEquals();
+                break;
+            case '<':
+                less();
+                break;
+            case '>':
+                greater();
+                break;
             }
         }
     }
-    
+
     // Parse and Translate a Boolean Factor with Leading NOT
     public void notFactor() {
         if (lookAhead == '!') {
             match('!');
             relation();
             notIt();
+        } else {
+            relation();
         }
     }
-    
+
     // Parse and Translate a Boolean Term
     public void boolTerm() {
         notFactor();
@@ -427,38 +462,42 @@ public class Tiny {
             popAnd();
         }
     }
-    
+
     // Recognize and Translate a Boolean OR
     public void boolOr() {
         match('|');
         boolTerm();
         popOr();
     }
-    
+
     // Recognize and Translate an Exclusive Or
     public void boolXor() {
         match('~');
         boolTerm();
         popXor();
     }
-    
+
     // Parse and Translate a Boolean Expression
     public void boolExpression() {
         boolTerm();
         while (isOrop(lookAhead)) {
             push();
-            switch(lookAhead) {
-            case '|':boolOr();break;
-            case '~':boolXor();break;
+            switch (lookAhead) {
+            case '|':
+                boolOr();
+                break;
+            case '~':
+                boolXor();
+                break;
             }
         }
     }
-    
+
     // Parse and Translate a Math Factor
     public void factor() {
         if (lookAhead == '(') {
             match('(');
-            expression();
+            boolExpression();
             match(')');
         } else if (isAlpha(lookAhead)) {
             loadVar(getName());
@@ -570,14 +609,61 @@ public class Tiny {
         char name;
         name = getName();
         match('=');
-        expression();
+        boolExpression();
         store(name);
+    }
+
+    // Recognize and Translate an IF Construct
+    public void doIf() {
+        String label1, label2;
+        match('i');
+        boolExpression();
+        label1 = newLabel();
+        label2 = label1;
+        branchFalse(label1);
+        block();
+        if (lookAhead == 'l') {
+            match('l');
+            label2 = newLabel();
+            branch(label2);
+            postLabel(label1);
+            block();
+        }
+        postLabel(label2);
+        match('e');
+    }
+
+    // Parse and Translate a WHILE Statement
+    public void doWhile() {
+        String label1, label2;
+        match('w');
+        label1 = newLabel();
+        label2 = newLabel();
+        postLabel(label1);
+        boolExpression();
+        branchFalse(label2);
+        block();
+        match('e');
+        branch(label1);
+        postLabel(label2);
     }
 
     // Parse and Translate a Block of Statements
     public void block() {
-        while (lookAhead != 'e') {
-            assignment();
+        while (lookAhead != 'e' && lookAhead != 'l') {
+            newLine();
+            switch (lookAhead) {
+            case 'i':
+                doIf();
+                break;
+            case 'w':
+                doWhile();
+                break;
+            default:
+                assignment();
+                break;
+            }
+            newLine();
         }
     }
 
@@ -634,16 +720,20 @@ public class Tiny {
     // <data declaration> ::= VAR <var-list>
     // <var-list> ::= <var> ( <var> )*
     // <var> ::= <ident> [ = <integer> ]
-    // <block> ::= (Assignment)*
-    // <assignment> ::= <ident> = <expression>
+    // <block> ::= ( <statement> )*
+    // <statement> ：：= <if> | <while> | <assignment>
+    // <assignment> ::= <ident> = <bool-expr>
     // <expression> ::= <first term> ( <addop> <term> )*
     // <first term> ::= <first factor> <rest>
     // <term> ::= <factor> <rest>
     // <rest> ::= ( <mulop> <factor> )*
     // <first factor> ::= [ <addop> ] <factor>
-    // <factor> ::= <var> | <number> | ( <expression> )
+    // <factor> ::= <var> | <number> | ( <bool-expr> )
     // <bool-expr> ::= <bool-term> ( <orop> <bool-term> )*
     // <bool-term> ::= <not-factor> ( <andop> <not-factor> )*
     // <not-factor> ::= [ '!' ] <relation>
     // <relation> ::= <expression> [ <relop> <expression> ]
+    // <if> ::= IF <bool-expression> <block> [ ELSE <block>] ENDIF
+    // <while> ::= WHILE <bool-expression> <block> ENDWHILE
+
 }

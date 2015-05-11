@@ -1631,11 +1631,11 @@ allow them virtually anywhere.  This means that we need  calls to
 NewLine at the BEGINNING (not the end, as with SkipWhite)  of the
 procedures GetName, GetNum, and Match.
 
-For procedures that have while loops, such as TopDecl, we  need a
-call  to NewLine at the beginning of the  procedure  AND  at  the
-bottom  of  each  loop.  That way, we can be assured that NewLine
-has just been called at the beginning of each  pass  through  the
-loop.
+For procedures that have while loops, such as TopDecl and block, 
+we  need a call  to NewLine at the beginning of the  procedure  
+AND  at  the bottom  of  each  loop.  That way, we can be assured 
+that NewLine has just been called at the beginning of each  pass  
+through  the loop.
 
 If you've got all this done, try the program out and  verify that
 it will indeed handle white space and newlines.
