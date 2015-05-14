@@ -6,7 +6,15 @@ import java.util.List;
 
 /**
  * Part X: INTRODUCING "TINY"
+ * sample program for tiny in part X is below
  * 
+PROGRAM
+VAR xMan = 1, ladyGa = 2
+BEGIN 
+IF xMan < 3 ladyGa = 3 ELSE ladyGa = 8 ENDIF
+xMan = 5
+END
+.
  * @author lucienSun
  *
  */
@@ -21,11 +29,27 @@ public class Tiny {
     // Lookahead Character
     private char lookAhead;
 
+    // Encoded Token
+    private char token;
+    // Unencoded Token
+    private String tokenVal;
+
     // Label Counter
     private int lCount;
 
-    // symbol Table
-    List<Character> symbolTable = null;
+    // entryTable aka variableTable
+    private int currentEntry = 0;
+    private final static int maxEntry = 800;
+    
+    private String[] entryTable = null;
+    private char[] entryTypeTable = null;
+
+    // Definition of Keywords and Token Types
+
+    private final static String[] keyWordList = { "IF", "ELSE", "ENDIF",
+            "WHILE", "ENDWHILE", "VAR", "BEGIN", "END", "PROGRAM" };
+
+    private final static String keyWordCode = "xilewevbep";
 
     // Here begins the code generation routines, we use it to retarget the cpu
     // Clear the Primary Register
@@ -44,9 +68,9 @@ public class Tiny {
     }
 
     // Load a Variable to Primary Register
-    public void loadVar(char variable) {
+    public void loadVar(String variable) {
         if (!inTable(variable)) {
-            undefined(String.valueOf(variable));
+            undefined(variable);
         }
         emitLn("MOVE " + variable + "(PC),D0");
     }
@@ -81,9 +105,9 @@ public class Tiny {
     }
 
     // Store Primary to Variable
-    public void store(char variable) {
+    public void store(String variable) {
         if (!inTable(variable)) {
-            undefined(String.valueOf(variable));
+            undefined(variable);
         }
         emitLn("LEA " + variable + "(PC),A0");
         emitLn("MOVE D0,(A0)");
@@ -242,9 +266,23 @@ public class Tiny {
         }
     }
 
-    // Look for Symbol in Table
-    public boolean inTable(char variable) {
-        return symbolTable.contains(variable);
+    // Look for entry in Table
+    public boolean inTable(String entry) {
+        return lookup(entryTable, entry) >= 0;
+    }
+
+    // Table Lookup return -1 if the str is not in the keyworklist
+    public int lookup(String[] keyWordList, String str) {
+        int i = keyWordList.length - 1;
+        boolean found = false;
+        while (i >= 0 && !found) {
+            if (keyWordList[i].equals(str)) {
+                found = true;
+            } else {
+                i--;
+            }
+        }
+        return i;
     }
 
     // Recognize White Space
@@ -262,7 +300,7 @@ public class Tiny {
             getChar();
         }
     }
-    
+
     // Skip Over an End-of-Line
     public void newLine() {
         while (lookAhead == CR) {
@@ -285,20 +323,32 @@ public class Tiny {
         }
     }
 
+    // Match a Specific Input String
+    public void matchString(String str) {
+        if (!tokenVal.equals(str)) {
+            expected("'" + str + "'");
+        }
+    }
+
     // temporary getName
-    public char getName() {
+    public void getName() {
+        // skip an E-O-L
         newLine();
-        char ch = lookAhead;
+        tokenVal = "";
         if (!isAlpha(lookAhead)) {
             expected("Name");
         }
-        getChar();
-
-        return ch;
+        while (isAlNum(lookAhead)) {
+            tokenVal = tokenVal + lookAhead;
+            getChar();
+        }
+        // skip whitespace
+        skipWhite();
     }
 
     // Get a Number
     public int getNum() {
+        // skip an E-O-L
         newLine();
         int val = 0;
         if (!isDigit(lookAhead)) {
@@ -308,8 +358,14 @@ public class Tiny {
             val = val * 10 + (lookAhead - '0');
             getChar();
         }
-
+        // skip whitespace
+        skipWhite();
         return val;
+    }
+
+    public void scan() {
+        getName();
+        token = keyWordCode.charAt(lookup(keyWordList, tokenVal) + 1);
     }
 
     // Generate a Unique Label in the form of 'Lnn',
@@ -336,14 +392,27 @@ public class Tiny {
         emit(str);
         System.out.println("");
     }
+    
+    // Add a New Entry to Entry Table
+    public void addEntry(String entry, char entryType) {
+        if (inTable(entry)) {
+            abort("Duplicate Identifier " + entry);
+        }
+        if (currentEntry >= maxEntry) {
+            abort("Entry table is full");
+        }
+        entryTable[currentEntry] = entry;
+        entryTypeTable[currentEntry] = entryType;
+        currentEntry++;    
+    }
 
     // Allocate Storage for a Variable
-    public void alloc(char variable) {
-        if (inTable(variable)) {
-            abort("Duplicate Variable Name " + variable);
+    public void alloc(String entry) {
+        if (inTable(entry)) {
+            abort("Duplicate Variable Name " + entry);
         }
-        symbolTable.add(variable);
-        System.out.print(variable + ":" + TAB + "DC ");
+        addEntry(entry, 'v');
+        System.out.print(entry + ":" + TAB + "DC ");
         if (lookAhead == '=') {
             match('=');
             if (lookAhead == '-') {
@@ -363,27 +432,29 @@ public class Tiny {
 
     // Parse and Translate a Data Declaration
     public void decl() {
-        match('v');
-        alloc(getName());
+        matchString("VAR");
+        getName();
+        alloc(tokenVal);
         while (lookAhead == ',') {
-            getChar();
-            alloc(getName());
+            match(',');
+            getName();
+            alloc(tokenVal);
         }
     }
 
     // Parse and Translate Global Declarations
     public void topDecls() {
-        while (lookAhead != 'b') {
-            newLine();
-            switch (lookAhead) {
+        scan();
+        while (token != 'b') {
+            switch (token) {
             case 'v':
                 decl();
                 break;
             default:
-                abort("Unrecognized Keyword '" + lookAhead + "'");
+                abort("Unrecognized Keyword " + tokenVal);
                 break;
             }
-            newLine();
+            scan();
         }
     }
 
@@ -500,7 +571,8 @@ public class Tiny {
             boolExpression();
             match(')');
         } else if (isAlpha(lookAhead)) {
-            loadVar(getName());
+            getName();
+            loadVar(tokenVal);
         } else {
             loadConst(getNum());
         }
@@ -606,8 +678,8 @@ public class Tiny {
 
     // Parse and Translate an Assignment Statement
     public void assignment() {
-        char name;
-        name = getName();
+        String name;
+        name = tokenVal;
         match('=');
         boolExpression();
         store(name);
@@ -616,43 +688,41 @@ public class Tiny {
     // Recognize and Translate an IF Construct
     public void doIf() {
         String label1, label2;
-        match('i');
+        matchString("IF");
         boolExpression();
         label1 = newLabel();
         label2 = label1;
         branchFalse(label1);
         block();
-        if (lookAhead == 'l') {
-            match('l');
+        if (token == 'l') {
             label2 = newLabel();
             branch(label2);
             postLabel(label1);
             block();
         }
         postLabel(label2);
-        match('e');
+        matchString("ENDIF");
     }
 
     // Parse and Translate a WHILE Statement
     public void doWhile() {
         String label1, label2;
-        match('w');
         label1 = newLabel();
         label2 = newLabel();
         postLabel(label1);
         boolExpression();
         branchFalse(label2);
         block();
-        match('e');
+        matchString("ENDWHILE");
         branch(label1);
         postLabel(label2);
     }
 
     // Parse and Translate a Block of Statements
     public void block() {
-        while (lookAhead != 'e' && lookAhead != 'l') {
-            newLine();
-            switch (lookAhead) {
+        scan();
+        while (token != 'e' && token != 'l') {
+            switch (token) {
             case 'i':
                 doIf();
                 break;
@@ -663,16 +733,16 @@ public class Tiny {
                 assignment();
                 break;
             }
-            newLine();
+            scan();
         }
     }
 
     // Parse and Translate a Main Program
     public void tMain() {
-        match('b');
+        matchString("BEGIN");
         prolog();
         block();
-        match('e');
+        matchString("END");
         epilog();
     }
 
@@ -690,13 +760,18 @@ public class Tiny {
     public void init() {
         lCount = 0;
         getChar();
-
-        symbolTable = new ArrayList<Character>();
+        scan();
+        entryTable = new String[maxEntry];
+        entryTypeTable = new char[maxEntry];
+        for (int i = 0; i < maxEntry; i++ ) {
+            entryTable[i] = "";
+            entryTypeTable[i] = '\0';
+        }
     }
 
     // Parse and Translate a Program
     public void program() {
-        match('p');
+        matchString("PROGRAM");
         header();
         topDecls();
         tMain();
