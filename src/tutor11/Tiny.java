@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Part XI: LEXICAL SCAN REVISITED sample program for tiny in part X is below
+ * Part XI: LEXICAL SCAN REVISITED TINY VERSION 1.1
  * 
  * PROGRAM VAR xMan = 1, ladyGa = 2 BEGIN IF xMan < 3 ladyGa = 3 ELSE ladyGa = 8
  * ENDIF xMan = 5 END .
@@ -41,11 +41,233 @@ public class Tiny {
     // Definition of Keywords and Token Types
 
     private final static String[] keyWordList = { "IF", "ELSE", "ENDIF",
-            "WHILE", "ENDWHILE", "READ", "WRITE", "VAR", "BEGIN", "END",
-            "PROGRAM" };
+            "WHILE", "ENDWHILE", "READ", "WRITE", "VAR", "END" };
 
-    private final static String keyWordCode = "xileweRWvbep";
+    private final static String keyWordCode = "xileweRWve";
 
+    // Read New Character From Input Stream
+    public void getChar() {
+        try {
+            lookAhead = (char) System.in.read();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Report an Error
+    public void error(String str) {
+        System.out.println("\nError: " + str + ".");
+    }
+
+    // Report Error and Halt
+    public void abort(String str) {
+        error(str);
+        System.exit(1);
+    }
+
+    // Report What Was Expected
+    public void expected(String str) {
+        abort(str + " expected");
+    }
+
+    // Report an Undefined Identifier
+    public void undefined(String variable) {
+        abort("Undefined Identifier " + variable);
+    }
+
+    // Report a Duplicate Identifier
+    public void duplicate(String variable) {
+        abort("Duplicate Identifier " + variable);
+    }
+
+    // Check to Make Sure the Current Token is an Identifier
+    public void checkIdent() {
+        if (token != 'x') {
+            expected("Identifier");
+        }
+    }
+
+    // Recognize an Alpha Character
+    public boolean isAlpha(char c) {
+        return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
+    }
+
+    // Recognize a Decimal Digit
+    public boolean isDigit(char c) {
+        return (c >= '0' && c <= '9');
+    }
+
+    // Recognize an Alphanumeric Character
+    public boolean isAlNum(char c) {        
+        return isAlpha(c) || isDigit(c);
+    }
+
+    // Recognize an Addop
+    public boolean isAddop(char c) {
+        return c == '+' || c == '-';
+    }
+
+    // Recognize a Mulop
+    public boolean isMulop(char c) {
+        return c == '*' || c == '/';
+    }
+
+    // Recognize a Boolean Orop
+    public boolean isOrop(char c) {
+        return c == '|' || c == '~';
+    }
+
+    // Recognize a Relop
+    public boolean isRelop(char c) {   
+        return c == '=' || c == '#' || c == '<' || c == '>';
+    }
+
+    // Recognize White Space
+    public boolean isWhite(char c) {
+        return c == ' ' || c == TAB || c == CR || c == LF;
+    }
+    
+    // Skip Over Leading White Space
+    public void skipWhite() {
+        while (isWhite(lookAhead)) {
+            getChar();
+        }
+    }
+    
+    // Table Lookup return -1 if the str is not in the keyworklist
+    public int lookup(String[] keyWordList, String str) {
+        int i = keyWordList.length - 1;
+        boolean found = false;
+        while (i >= 0 && !found) {
+            if (keyWordList[i].equals(str)) {
+                found = true;
+            } else {
+                i--;
+            }
+        }
+        return i;
+    }
+    
+    // Look for entry in Table
+    public boolean inTable(String entry) {
+        return lookup(entryTable, entry) >= 0;
+    }
+
+    // Check to See if an Identifier is in the Symbol Table 
+    // Report an error if it isn't.
+    public void checkTable(String entry) {
+        if (!inTable(entry)) {
+            undefined(entry);
+        }
+    }
+    
+    // Check the Symbol Table for a Duplicate Identifier
+    // Report an error if identifier is already in table.
+    public void checkDup(String entry) {
+        if (inTable(entry)) {
+            duplicate(entry);
+        }
+    }
+    
+    // Add a New Entry to Entry/Symbol Table
+    public void addEntry(String entry, char entryType) {
+        checkDup(entry);
+        if (currentEntry >= maxEntry) {
+            abort("Entry table is full");
+        }
+        entryTable[currentEntry] = entry;
+        entryTypeTable[currentEntry] = entryType;
+        currentEntry++;
+    }
+    
+    // Get an Identifier
+    public void getName() {
+        skipWhite();
+        if (!isAlpha(lookAhead)) {
+            expected("Identifier");
+        }
+        token = 'x';
+        tokenVal = "";
+        while (isAlNum(lookAhead)) {
+            tokenVal = tokenVal + lookAhead;
+            getChar();
+        }
+    }
+
+    // Get a Number
+    public void getNum() {
+        skipWhite();
+        if (!isDigit(lookAhead)) {
+            expected("Number");
+        }
+        token = '#';
+        tokenVal = "";
+        while (isDigit(lookAhead)) {
+            tokenVal = tokenVal + lookAhead;
+            getChar();
+        }
+    }
+
+    // Get an Operator
+    public void getOp() {
+        skipWhite();
+        token = lookAhead;
+        tokenVal = String.valueOf(lookAhead);
+        getChar();
+    }
+    
+    // Get the Next Input Token
+    public void next() {
+        skipWhite();
+        if (isAlpha(lookAhead)) {
+            getName();
+        } else if (isDigit(lookAhead)) {
+            getNum();
+        } else {
+            getOp();
+        }
+    }
+    
+    // Scan the Current Identifier for Keywords
+    public void scan() {
+        if (token == 'x') {
+            token = keyWordCode.charAt(lookup(keyWordList, tokenVal) + 1);
+        }
+    }
+    
+    // Match a Specific Input String
+    public void matchString(String str) {
+        if (!tokenVal.equals(str)) {
+            expected("'" + str + "'");
+        }
+        next();
+    }
+    
+    // Output a String with TAB
+    public void emit(String str) {
+        System.out.print(TAB + str);
+    }
+
+    // Output a String with TAB and CRLF
+    public void emitLn(String str) {
+        emit(str);
+        System.out.println("");
+    }
+    
+    // Generate a Unique Label in the form of 'Lnn',
+    // where nn is a label number starting from zero.
+    public String newLabel() {
+        String str = null;
+        str = String.valueOf(lCount);
+        lCount++;
+        return "L" + str;
+    }
+
+    // Post a Label To Output
+    public void postLabel(String label) {
+        System.out.println(label + ":");
+    }
+    
     // Here begins the code generation routines, we use it to retarget the cpu
     // Clear the Primary Register
     public void clear() {
@@ -55,6 +277,11 @@ public class Tiny {
     // Negate the Primary Register
     public void negate() {
         emitLn("NEG D0");
+    }
+    
+    // Complement the Primary Register
+    public void notIt() {
+        emitLn("NOT D0");
     }
 
     // Load a Constant Value to Primary Register
@@ -99,25 +326,6 @@ public class Tiny {
         emitLn("MOVE D7,D0");
     }
 
-    // Store Primary to Variable
-    public void store(String variable) {
-        if (!inTable(variable)) {
-            undefined(variable);
-        }
-        emitLn("LEA " + variable + "(PC),A0");
-        emitLn("MOVE D0,(A0)");
-    }
-
-    // Report an Undefined Identifier
-    public void undefined(String variable) {
-        abort("Undefined Identifier " + variable);
-    }
-
-    // Complement the Primary Register
-    public void notIt() {
-        emitLn("NOT D0");
-    }
-
     // AND Top of Stack with Primary
     public void popAnd() {
         emitLn("AND (SP)+,D0");
@@ -127,17 +335,17 @@ public class Tiny {
     public void popOr() {
         emitLn("OR (SP)+,D0");
     }
-
+    
     // XOR Top of Stack with Primary
     public void popXor() {
         emitLn("EOR (SP)+,D0");
     }
-
+    
     // Compare Top of Stack with Primary
     public void popCompare() {
         emitLn("CMP (SP)+,D0");
     }
-
+    
     // Set D0 If Compare was =
     public void setEqual() {
         emitLn("SEQ D0");
@@ -149,7 +357,7 @@ public class Tiny {
         emitLn("SNE D0");
         emitLn("EXT D0");
     }
-
+    
     // Set D0 If Compare was >
     public void setGreater() {
         emitLn("SLT D0");
@@ -161,7 +369,7 @@ public class Tiny {
         emitLn("SGT D0");
         emitLn("EXT D0");
     }
-
+    
     // Set D0 If Compare was <=
     public void setLessOrEqual() {
         emitLn("SGE D0");
@@ -172,6 +380,12 @@ public class Tiny {
     public void setGreaterOrEqual() {
         emitLn("SLE D0");
         emitLn("EXT D0");
+    }
+    
+    // Store Primary to Variable
+    public void store(String variable) {
+        emitLn("LEA " + variable + "(PC),A0");
+        emitLn("MOVE D0,(A0)");
     }
 
     // Branch Unconditional
@@ -197,130 +411,24 @@ public class Tiny {
     }
 
     // Here ends the code generation routines, we use it to retarget the cpu
-
-    // Read New Character From Input Stream
-    public void getChar() {
-        try {
-            lookAhead = (char) System.in.read();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    
+    // Write Header Info
+    public void header() {
+        System.out.println("WARMST" + TAB + "EQU $A01E");
+        emitLn("LIB TINYLIB");
     }
-
-    // Report an Error
-    public void error(String str) {
-        System.out.println("\nError: " + str + ".");
+    
+    // Write the Prolog
+    public void prolog() {
+        postLabel("MAIN");
     }
-
-    // Report Error and Halt
-    public void abort(String str) {
-        error(str);
-        System.exit(1);
+    
+    // Write the Epilog
+    public void epilog() {
+        emitLn("DC WARMST");
+        emitLn("END MAIN");
     }
-
-    // Report What Was Expected
-    public void expected(String str) {
-        abort(str + " expected");
-    }
-
-    // Recognize an Alpha Character
-    public boolean isAlpha(char c) {
-        if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    // Recognize a Decimal Digit
-    public boolean isDigit(char c) {
-        if (c >= '0' && c <= '9') {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    // Recognize an Alphanumeric Character
-    public boolean isAlNum(char c) {
-        if (isAlpha(c) || isDigit(c)) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    // Recognize an Addop
-    public boolean isAddop(char c) {
-        if (c == '+' || c == '-') {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    // Recognize a Mulop
-    public boolean isMulop(char c) {
-        if (c == '*' || c == '/') {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    // Recognize a Boolean Orop
-    public boolean isOrop(char c) {
-        if (c == '|' || c == '~') {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    // Recognize a Relop
-    public boolean isRelop(char c) {
-        if (c == '=' || c == '#' || c == '<' || c == '>') {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    // Look for entry in Table
-    public boolean inTable(String entry) {
-        return lookup(entryTable, entry) >= 0;
-    }
-
-    // Table Lookup return -1 if the str is not in the keyworklist
-    public int lookup(String[] keyWordList, String str) {
-        int i = keyWordList.length - 1;
-        boolean found = false;
-        while (i >= 0 && !found) {
-            if (keyWordList[i].equals(str)) {
-                found = true;
-            } else {
-                i--;
-            }
-        }
-        return i;
-    }
-
-    // Recognize White Space
-    public boolean isWhite(char c) {
-        if (c == ' ' || c == TAB || c == CR || c == LF) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    // Skip Over Leading White Space
-    public void skipWhite() {
-        while (isWhite(lookAhead)) {
-            getChar();
-        }
-    }
-
+    
     // Skip Over an End-of-Line
     public void newLine() {
         while (lookAhead == CR) {
@@ -343,109 +451,10 @@ public class Tiny {
         }
     }
 
-    // Match a Specific Input String
-    public void matchString(String str) {
-        if (!tokenVal.equals(str)) {
-            expected("'" + str + "'");
-        }
-        next();
-    }
 
-    // Get an Identifier
-    public void getName() {
-        // skip an E-O-L
-        skipWhite();
-        token = 'x';
-        tokenVal = "";
-        if (!isAlpha(lookAhead)) {
-            expected("Identifier");
-        }
-        while (isAlNum(lookAhead)) {
-            tokenVal = tokenVal + lookAhead;
-            getChar();
-        }
 
-    }
 
-    // Get a Number
-    public void getNum() {
-        // skip an E-O-L
-        skipWhite();
-        token = '#';
-        tokenVal = "";
-        if (!isDigit(lookAhead)) {
-            expected("Number");
-        }
-        while (isDigit(lookAhead)) {
-            tokenVal = tokenVal + lookAhead;
-            getChar();
-        }
-    }
 
-    // Get an Operator
-    public void getOp() {
-        skipWhite();
-        token = lookAhead;
-        tokenVal = String.valueOf(lookAhead);
-        getChar();
-    }
-
-    // Get the Next Input Token
-    public void next() {
-        skipWhite();
-        if (isAlpha(lookAhead)) {
-            getName();
-        } else if (isDigit(lookAhead)) {
-            getNum();
-        } else {
-            getOp();
-        }
-    }
-
-    // Scan the Current Identifier for Keywords
-    public void scan() {
-        if (token == 'x') {       
-            token = keyWordCode.charAt(lookup(keyWordList, tokenVal) + 1); 
-        }
-    }
-
-    // Generate a Unique Label in the form of 'Lnn',
-    // where nn is a label number starting from zero.
-    public String newLabel() {
-        String str = null;
-        str = String.valueOf(lCount);
-        lCount++;
-        return "L" + str;
-    }
-
-    // Post a Label To Output
-    public void postLabel(String label) {
-        System.out.println(label + ":");
-    }
-
-    // Output a String with TAB
-    public void emit(String str) {
-        System.out.print(TAB + str);
-    }
-
-    // Output a String with TAB and CRLF
-    public void emitLn(String str) {
-        emit(str);
-        System.out.println("");
-    }
-
-    // Add a New Entry to Entry Table
-    public void addEntry(String entry, char entryType) {
-        if (inTable(entry)) {
-            abort("Duplicate Identifier " + entry);
-        }
-        if (currentEntry >= maxEntry) {
-            abort("Entry table is full");
-        }
-        entryTable[currentEntry] = entry;
-        entryTypeTable[currentEntry] = entryType;
-        currentEntry++;
-    }
 
     // Allocate Storage for a Variable
     public void alloc(String entry) {
@@ -467,11 +476,6 @@ public class Tiny {
         }
     }
 
-    // Write Header Info
-    public void header() {
-        System.out.println("WARMST" + TAB + "EQU $A01E");
-        emitLn("LIB TINYLIB");
-    }
 
     // Parse and Translate a Data Declaration
     public void decl() {
@@ -625,9 +629,9 @@ public class Tiny {
     // Parse and Translate a Boolean Expression
     public void boolExpression() {
         boolTerm();
-        while (isOrop(lookAhead)) {
+        while (isOrop(token)) {
             push();
-            switch (lookAhead) {
+            switch (token) {
             case '|':
                 boolOr();
                 break;
@@ -724,7 +728,7 @@ public class Tiny {
 
     // Recognize and Translate an Add
     public void add() {
-        match('+');
+        next();
         term();
         popAdd();
     }
@@ -764,13 +768,14 @@ public class Tiny {
     // Recognize and Translate an IF Construct
     public void doIf() {
         String label1, label2;
-        matchString("IF");
+        next();
         boolExpression();
         label1 = newLabel();
         label2 = label1;
         branchFalse(label1);
         block();
         if (token == 'l') {
+            next();
             label2 = newLabel();
             branch(label2);
             postLabel(label1);
@@ -854,15 +859,8 @@ public class Tiny {
         match(')');
     }
 
-    // Write the Prolog
-    public void prolog() {
-        postLabel("MAIN");
-    }
 
-    public void epilog() {
-        emitLn("DC WARMST");
-        emitLn("END MAIN");
-    }
+
 
     // Initialize
     public void init() {
