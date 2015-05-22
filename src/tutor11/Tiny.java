@@ -1,11 +1,11 @@
-package tutor10;
+package tutor11;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Part X: INTRODUCING "TINY" sample program for tiny in part X is below
+ * Part XI: LEXICAL SCAN REVISITED sample program for tiny in part X is below
  * 
  * PROGRAM VAR xMan = 1, ladyGa = 2 BEGIN IF xMan < 3 ladyGa = 3 ELSE ladyGa = 8
  * ENDIF xMan = 5 END .
@@ -22,7 +22,7 @@ public class Tiny {
 
     // Label Counter
     private int lCount;
-    
+
     // Variable Declarations
     // Lookahead Character
     private char lookAhead;
@@ -58,7 +58,7 @@ public class Tiny {
     }
 
     // Load a Constant Value to Primary Register
-    public void loadConst(int constant) {
+    public void loadConst(String constant) {
         emitLn("MOVE #" + constant + ",D0");
     }
 
@@ -307,7 +307,7 @@ public class Tiny {
 
     // Recognize White Space
     public boolean isWhite(char c) {
-        if (c == ' ' || c == TAB) {
+        if (c == ' ' || c == TAB || c == CR || c == LF) {
             return true;
         } else {
             return false;
@@ -348,44 +348,65 @@ public class Tiny {
         if (!tokenVal.equals(str)) {
             expected("'" + str + "'");
         }
+        next();
     }
 
-    // temporary getName
+    // Get an Identifier
     public void getName() {
         // skip an E-O-L
-        newLine();
+        skipWhite();
+        token = 'x';
         tokenVal = "";
         if (!isAlpha(lookAhead)) {
-            expected("Name");
+            expected("Identifier");
         }
         while (isAlNum(lookAhead)) {
             tokenVal = tokenVal + lookAhead;
             getChar();
         }
-        // skip whitespace
-        skipWhite();
+
     }
 
     // Get a Number
-    public int getNum() {
+    public void getNum() {
         // skip an E-O-L
-        newLine();
-        int val = 0;
+        skipWhite();
+        token = '#';
+        tokenVal = "";
         if (!isDigit(lookAhead)) {
             expected("Number");
         }
         while (isDigit(lookAhead)) {
-            val = val * 10 + (lookAhead - '0');
+            tokenVal = tokenVal + lookAhead;
             getChar();
         }
-        // skip whitespace
-        skipWhite();
-        return val;
     }
 
+    // Get an Operator
+    public void getOp() {
+        skipWhite();
+        token = lookAhead;
+        tokenVal = String.valueOf(lookAhead);
+        getChar();
+    }
+
+    // Get the Next Input Token
+    public void next() {
+        skipWhite();
+        if (isAlpha(lookAhead)) {
+            getName();
+        } else if (isDigit(lookAhead)) {
+            getNum();
+        } else {
+            getOp();
+        }
+    }
+
+    // Scan the Current Identifier for Keywords
     public void scan() {
-        getName();
-        token = keyWordCode.charAt(lookup(keyWordList, tokenVal) + 1);
+        if (token == 'x') {       
+            token = keyWordCode.charAt(lookup(keyWordList, tokenVal) + 1); 
+        }
     }
 
     // Generate a Unique Label in the form of 'Lnn',
@@ -439,7 +460,8 @@ public class Tiny {
                 System.out.print(lookAhead);
                 match('-');
             }
-            System.out.println(getNum());
+            getNum();
+            System.out.println(tokenVal);
         } else {
             System.out.println("0");
         }
@@ -626,7 +648,8 @@ public class Tiny {
             getName();
             loadVar(tokenVal);
         } else {
-            loadConst(getNum());
+            getNum();
+            loadConst(tokenVal);
         }
     }
 
@@ -634,7 +657,8 @@ public class Tiny {
     public void negFactor() {
         match('-');
         if (isDigit(lookAhead)) {
-            loadConst(-getNum());
+            getNum();
+            loadConst("-" + tokenVal);
         } else {
             factor();
             negate();
@@ -803,13 +827,13 @@ public class Tiny {
         matchString("END");
         epilog();
     }
-    
+
     // Process a Read Statement
     public void doRead() {
         match('(');
         getName();
         readVar();
-        while(lookAhead == ',') {
+        while (lookAhead == ',') {
             match(',');
             getName();
             readVar();
@@ -822,14 +846,14 @@ public class Tiny {
         match('(');
         expression();
         writeVar();
-        while(lookAhead == ',') {
+        while (lookAhead == ',') {
             match(',');
             expression();
             writeVar();
         }
         match(')');
     }
-    
+
     // Write the Prolog
     public void prolog() {
         postLabel("MAIN");
@@ -844,7 +868,6 @@ public class Tiny {
     public void init() {
         lCount = 0;
         getChar();
-        scan();
         entryTable = new String[maxEntry];
         entryTypeTable = new char[maxEntry];
         for (int i = 0; i < maxEntry; i++) {
@@ -866,10 +889,11 @@ public class Tiny {
     public static void main(String[] args) {
         Tiny tiny = new Tiny();
         tiny.init();
-        tiny.program();
-        if (tiny.lookAhead != CR) {
-            tiny.abort("Unexpected data after '.'");
-        }
+
+        do {
+            tiny.next();
+            System.out.println(tiny.token + " " + tiny.tokenVal);
+        } while (tiny.token != '.');
     }
 
     // all necessary bnfs
