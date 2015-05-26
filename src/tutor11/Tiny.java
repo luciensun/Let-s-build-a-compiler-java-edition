@@ -1,8 +1,6 @@
 package tutor11;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Part XI: LEXICAL SCAN REVISITED TINY VERSION 1.1
@@ -98,7 +96,7 @@ public class Tiny {
     }
 
     // Recognize an Alphanumeric Character
-    public boolean isAlNum(char c) {        
+    public boolean isAlNum(char c) {
         return isAlpha(c) || isDigit(c);
     }
 
@@ -118,7 +116,7 @@ public class Tiny {
     }
 
     // Recognize a Relop
-    public boolean isRelop(char c) {   
+    public boolean isRelop(char c) {
         return c == '=' || c == '#' || c == '<' || c == '>';
     }
 
@@ -126,14 +124,14 @@ public class Tiny {
     public boolean isWhite(char c) {
         return c == ' ' || c == TAB || c == CR || c == LF;
     }
-    
+
     // Skip Over Leading White Space
     public void skipWhite() {
         while (isWhite(lookAhead)) {
             getChar();
         }
     }
-    
+
     // Table Lookup return -1 if the str is not in the keyworklist
     public int lookup(String[] keyWordList, String str) {
         int i = keyWordList.length - 1;
@@ -147,20 +145,20 @@ public class Tiny {
         }
         return i;
     }
-    
+
     // Look for entry in Table
     public boolean inTable(String entry) {
         return lookup(entryTable, entry) >= 0;
     }
 
-    // Check to See if an Identifier is in the Symbol Table 
+    // Check to See if an Identifier is in the Symbol Table
     // Report an error if it isn't.
     public void checkTable(String entry) {
         if (!inTable(entry)) {
             undefined(entry);
         }
     }
-    
+
     // Check the Symbol Table for a Duplicate Identifier
     // Report an error if identifier is already in table.
     public void checkDup(String entry) {
@@ -168,7 +166,7 @@ public class Tiny {
             duplicate(entry);
         }
     }
-    
+
     // Add a New Entry to Entry/Symbol Table
     public void addEntry(String entry, char entryType) {
         checkDup(entry);
@@ -179,7 +177,7 @@ public class Tiny {
         entryTypeTable[currentEntry] = entryType;
         currentEntry++;
     }
-    
+
     // Get an Identifier
     public void getName() {
         skipWhite();
@@ -215,7 +213,7 @@ public class Tiny {
         tokenVal = String.valueOf(lookAhead);
         getChar();
     }
-    
+
     // Get the Next Input Token
     public void next() {
         skipWhite();
@@ -227,14 +225,14 @@ public class Tiny {
             getOp();
         }
     }
-    
+
     // Scan the Current Identifier for Keywords
     public void scan() {
         if (token == 'x') {
             token = keyWordCode.charAt(lookup(keyWordList, tokenVal) + 1);
         }
     }
-    
+
     // Match a Specific Input String
     public void matchString(String str) {
         if (!tokenVal.equals(str)) {
@@ -242,7 +240,7 @@ public class Tiny {
         }
         next();
     }
-    
+
     // Output a String with TAB
     public void emit(String str) {
         System.out.print(TAB + str);
@@ -253,7 +251,7 @@ public class Tiny {
         emit(str);
         System.out.println("");
     }
-    
+
     // Generate a Unique Label in the form of 'Lnn',
     // where nn is a label number starting from zero.
     public String newLabel() {
@@ -267,7 +265,7 @@ public class Tiny {
     public void postLabel(String label) {
         System.out.println(label + ":");
     }
-    
+
     // Here begins the code generation routines, we use it to retarget the cpu
     // Clear the Primary Register
     public void clear() {
@@ -278,7 +276,7 @@ public class Tiny {
     public void negate() {
         emitLn("NEG D0");
     }
-    
+
     // Complement the Primary Register
     public void notIt() {
         emitLn("NOT D0");
@@ -335,17 +333,17 @@ public class Tiny {
     public void popOr() {
         emitLn("OR (SP)+,D0");
     }
-    
+
     // XOR Top of Stack with Primary
     public void popXor() {
         emitLn("EOR (SP)+,D0");
     }
-    
+
     // Compare Top of Stack with Primary
     public void popCompare() {
         emitLn("CMP (SP)+,D0");
     }
-    
+
     // Set D0 If Compare was =
     public void setEqual() {
         emitLn("SEQ D0");
@@ -357,7 +355,7 @@ public class Tiny {
         emitLn("SNE D0");
         emitLn("EXT D0");
     }
-    
+
     // Set D0 If Compare was >
     public void setGreater() {
         emitLn("SLT D0");
@@ -369,7 +367,7 @@ public class Tiny {
         emitLn("SGT D0");
         emitLn("EXT D0");
     }
-    
+
     // Set D0 If Compare was <=
     public void setLessOrEqual() {
         emitLn("SGE D0");
@@ -381,7 +379,7 @@ public class Tiny {
         emitLn("SLE D0");
         emitLn("EXT D0");
     }
-    
+
     // Store Primary to Variable
     public void store(String variable) {
         emitLn("LEA " + variable + "(PC),A0");
@@ -401,34 +399,37 @@ public class Tiny {
 
     // read value in Primary Register(D0) to Variable
     public void readVar() {
+        checkIdent();
+        checkTable(tokenVal);
         emitLn("BSR READ");
         store(tokenVal);
+        next();
     }
 
-    // Write value of Variable to Primary Register(D0)
+    // Write from Primary Register(D0)
     public void writeVar() {
         emitLn("BSR WRITE");
     }
 
     // Here ends the code generation routines, we use it to retarget the cpu
-    
+
     // Write Header Info
     public void header() {
         System.out.println("WARMST" + TAB + "EQU $A01E");
         emitLn("LIB TINYLIB");
     }
-    
+
     // Write the Prolog
     public void prolog() {
         postLabel("MAIN");
     }
-    
+
     // Write the Epilog
     public void epilog() {
         emitLn("DC WARMST");
         emitLn("END MAIN");
     }
-    
+
     // Skip Over an End-of-Line
     public void newLine() {
         while (lookAhead == CR) {
@@ -440,91 +441,40 @@ public class Tiny {
         }
     }
 
-    // Match a Specific Input Character
-    public void match(char x) {
-        newLine();
-        if (lookAhead == x) {
-            getChar();
-            skipWhite();
-        } else {
-            expected("'" + x + "'");
-        }
+    // Get Another Expression and Compare
+    public void compareExpression() {
+        expression();
+        popCompare();
     }
 
-
-
-
-
-
-    // Allocate Storage for a Variable
-    public void alloc(String entry) {
-        if (inTable(entry)) {
-            abort("Duplicate Variable Name " + entry);
-        }
-        addEntry(entry, 'v');
-        System.out.print(entry + ":" + TAB + "DC ");
-        if (lookAhead == '=') {
-            match('=');
-            if (lookAhead == '-') {
-                System.out.print(lookAhead);
-                match('-');
-            }
-            getNum();
-            System.out.println(tokenVal);
-        } else {
-            System.out.println("0");
-        }
-    }
-
-
-    // Parse and Translate a Data Declaration
-    public void decl() {
-        matchString("VAR");
-        getName();
-        alloc(tokenVal);
-        while (lookAhead == ',') {
-            match(',');
-            getName();
-            alloc(tokenVal);
-        }
-    }
-
-    // Parse and Translate Global Declarations
-    public void topDecls() {
-        scan();
-        while (token != 'b') {
-            switch (token) {
-            case 'v':
-                decl();
-                break;
-            default:
-                abort("Unrecognized Keyword " + tokenVal);
-                break;
-            }
-            scan();
-        }
+    // Get The Next Expression and Compare
+    public void nextExpression() {
+        next();
+        compareExpression();
     }
 
     // Recognize and Translate a Relational "Equals"
     public void equals() {
-        match('=');
-        expression();
-        popCompare();
+        nextExpression();
         setEqual();
     }
 
     // Recognize and Translate a Relational "Not Equals"
     public void notEquals() {
-        match('>');
-        expression();
-        popCompare();
+        nextExpression();
         setNEqual();
+    }
+
+    // Recognize and Translate a Relational "Less Than or Equal"
+    public void lessOrEqual() {
+        nextExpression();
+        setLessOrEqual();
     }
 
     // Recognize and Translate a Relational "Less Than"
     public void less() {
-        match('<');
-        switch (lookAhead) {
+        next();
+        switch (token) {
         case '=':
             lessOrEqual();
             break;
@@ -532,53 +482,31 @@ public class Tiny {
             notEquals();
             break;
         default:
-            expression();
-            popCompare();
+            compareExpression();
             setLess();
         }
-        expression();
-        popCompare();
-        setLess();
     }
 
     // Recognize and Translate a Relational "Greater Than"
     public void greater() {
-        match('>');
-        switch (lookAhead) {
-
-        }
-        if (lookAhead == '=') {
-            match('=');
-            expression();
-            popCompare();
+        next();
+        if (token == '=') {
+            nextExpression();
             setGreaterOrEqual();
         } else {
-            expression();
-            popCompare();
+            compareExpression();
             setGreater();
         }
-    }
-
-    // Recognize and Translate a Relational "Less Than or Equal"
-    public void lessOrEqual() {
-        match('=');
-        expression();
-        popCompare();
-        setLessOrEqual();
-
     }
 
     // Parse and Translate a Relation
     public void relation() {
         expression();
-        if (isRelop(lookAhead)) {
+        if (isRelop(token)) {
             push();
-            switch (lookAhead) {
+            switch (token) {
             case '=':
                 equals();
-                break;
-            case '#':
-                notEquals();
                 break;
             case '<':
                 less();
@@ -592,8 +520,8 @@ public class Tiny {
 
     // Parse and Translate a Boolean Factor with Leading NOT
     public void notFactor() {
-        if (lookAhead == '!') {
-            match('!');
+        if (token == '!') {
+            next();
             relation();
             notIt();
         } else {
@@ -604,9 +532,9 @@ public class Tiny {
     // Parse and Translate a Boolean Term
     public void boolTerm() {
         notFactor();
-        while (lookAhead == '&') {
+        while (token == '&') {
             push();
-            match('&');
+            next();
             notFactor();
             popAnd();
         }
@@ -614,14 +542,14 @@ public class Tiny {
 
     // Recognize and Translate a Boolean OR
     public void boolOr() {
-        match('|');
+        next();
         boolTerm();
         popOr();
     }
 
     // Recognize and Translate an Exclusive Or
     public void boolXor() {
-        match('~');
+        next();
         boolTerm();
         popXor();
     }
@@ -644,23 +572,25 @@ public class Tiny {
 
     // Parse and Translate a Math Factor
     public void factor() {
-        if (lookAhead == '(') {
-            match('(');
+        if (token == '(') {
+            next();
             boolExpression();
-            match(')');
-        } else if (isAlpha(lookAhead)) {
-            getName();
+            matchString(")");
+        } else if (token == 'x') {
             loadVar(tokenVal);
-        } else {
-            getNum();
+            next();
+        } else if (token == '#') {
             loadConst(tokenVal);
+            next();
+        } else {
+            expected("Math Factor");
         }
     }
 
     // Parse and Translate a Negative Factor
     public void negFactor() {
-        match('-');
-        if (isDigit(lookAhead)) {
+        next();
+        if (token == '#') {
             getNum();
             loadConst("-" + tokenVal);
         } else {
@@ -671,9 +601,9 @@ public class Tiny {
 
     // Parse and Translate a Leading Factor
     public void firstFactor() {
-        switch (lookAhead) {
+        switch (token) {
         case '+':
-            match('+');
+            next();
             factor();
             break;
         case '-':
@@ -687,23 +617,23 @@ public class Tiny {
 
     // Recognize and Translate a Multiply
     public void multiply() {
-        match('*');
+        next();
         factor();
         popMul();
     }
 
     // Recognize and Translate a Divide
     public void divide() {
-        match('/');
+        next();
         factor();
         popDiv();
     }
 
     // Common Code Used by Term and FirstTerm
     public void term1() {
-        while (isMulop(lookAhead)) {
+        while (isMulop(token)) {
             push();
-            switch (lookAhead) {
+            switch (token) {
             case '*':
                 multiply();
                 break;
@@ -735,7 +665,7 @@ public class Tiny {
 
     // Recognize and Translate a Subtract
     public void subtract() {
-        match('-');
+        next();
         term();
         popSub();
     }
@@ -743,9 +673,9 @@ public class Tiny {
     // Parse and Translate an Expression
     public void expression() {
         firstTerm();
-        while (isAddop(lookAhead)) {
+        while (isAddop(token)) {
             push();
-            switch (lookAhead) {
+            switch (token) {
             case '+':
                 add();
                 break;
@@ -758,9 +688,11 @@ public class Tiny {
 
     // Parse and Translate an Assignment Statement
     public void assignment() {
-        String name;
+        String name = null;
+        checkTable(tokenVal);
         name = tokenVal;
-        match('=');
+        next();
+        matchString("=");
         boolExpression();
         store(name);
     }
@@ -788,6 +720,7 @@ public class Tiny {
     // Parse and Translate a WHILE Statement
     public void doWhile() {
         String label1, label2;
+        next();
         label1 = newLabel();
         label2 = newLabel();
         postLabel(label1);
@@ -797,6 +730,32 @@ public class Tiny {
         matchString("ENDWHILE");
         branch(label1);
         postLabel(label2);
+    }
+
+    // Process a Read Statement
+    public void doRead() {
+        next();
+        matchString("(");
+        readVar();
+        while (token == ',') {
+            next();
+            readVar();
+        }
+        matchString(")");
+    }
+
+    // Process a Write Statement
+    public void doWrite() {
+        next();
+        matchString("(");
+        expression();
+        writeVar();
+        while (token == ',') {
+            next();
+            expression();
+            writeVar();
+        }
+        matchString(")");
     }
 
     // Parse and Translate a Block of Statements
@@ -824,8 +783,54 @@ public class Tiny {
         }
     }
 
-    // Parse and Translate a Main Program
-    public void tMain() {
+    // Allocate Storage for a Static Variable
+    public void allocate(String entry, String entryVal) {
+        System.out.println(entry + ":" + TAB + "DC " + entryVal);
+    }
+
+    // Allocate Storage for a Variable
+    public void alloc() {
+        next();
+        if (token != 'x') {
+            expected("Variable Name");
+        }
+        checkDup(tokenVal);
+        addEntry(tokenVal, 'v');
+        allocate(tokenVal, "0");
+        next();
+    }
+
+    // Parse and Translate Global Declarations
+    public void topDecls() {
+        scan();
+        while (token == 'v') {
+            alloc();
+            while (token == ',') {
+                alloc();
+            }
+        }
+    }
+
+    // Initialize
+    public void init() {
+        lCount = 0;
+        entryTable = new String[maxEntry];
+        entryTypeTable = new char[maxEntry];
+        for (int i = 0; i < maxEntry; i++) {
+            entryTable[i] = "";
+            entryTypeTable[i] = '\0';
+        }
+
+        getChar();
+        next();
+    }
+
+    // Parse and Translate a Program
+    public void program() {
+        init();
+        matchString("PROGRAM");
+        header();
+        topDecls();
         matchString("BEGIN");
         prolog();
         block();
@@ -833,65 +838,10 @@ public class Tiny {
         epilog();
     }
 
-    // Process a Read Statement
-    public void doRead() {
-        match('(');
-        getName();
-        readVar();
-        while (lookAhead == ',') {
-            match(',');
-            getName();
-            readVar();
-        }
-        match(')');
-    }
-
-    // Process a Write Statement
-    public void doWrite() {
-        match('(');
-        expression();
-        writeVar();
-        while (lookAhead == ',') {
-            match(',');
-            expression();
-            writeVar();
-        }
-        match(')');
-    }
-
-
-
-
-    // Initialize
-    public void init() {
-        lCount = 0;
-        getChar();
-        entryTable = new String[maxEntry];
-        entryTypeTable = new char[maxEntry];
-        for (int i = 0; i < maxEntry; i++) {
-            entryTable[i] = "";
-            entryTypeTable[i] = '\0';
-        }
-    }
-
-    // Parse and Translate a Program
-    public void program() {
-        matchString("PROGRAM");
-        header();
-        topDecls();
-        tMain();
-        match('.');
-    }
-
     // Main Program the entry point
     public static void main(String[] args) {
         Tiny tiny = new Tiny();
-        tiny.init();
-
-        do {
-            tiny.next();
-            System.out.println(tiny.token + " " + tiny.tokenVal);
-        } while (tiny.token != '.');
+        tiny.program();
     }
 
     // all necessary bnfs
