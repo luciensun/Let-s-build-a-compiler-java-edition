@@ -794,10 +794,27 @@ public class Tiny {
         if (token != 'x') {
             expected("Variable Name");
         }
-        checkDup(tokenVal);
-        addEntry(tokenVal, 'v');
-        allocate(tokenVal, "0");
+        String entry = tokenVal;
+        checkDup(entry);
+        addEntry(entry, 'v');
+        // get the next token
         next();
+        if (token == '=') {
+            // if variable is assigned certain value it will be 
+            // initialized with the given value
+            next();
+            if (token == '-') {
+                next();
+                allocate(entry, "-" + tokenVal);
+                next();
+            } else {
+                allocate(entry, tokenVal);
+                next();
+            }
+        } else {
+            // otherwise variable is initialized to be zero
+            allocate(entry, "0");
+        }
     }
 
     // Parse and Translate Global Declarations
