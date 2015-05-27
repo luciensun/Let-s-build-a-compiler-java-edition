@@ -288,14 +288,12 @@ begin
 end;
 {--------------------------------------------------------------}
 
-
 This procedure works very much like our old Match.  It insists on
 finding a semicolon as the next token.  Having found it, it skips
 to the next one.
 
 Since a  semicolon follows a statement, procedure Block is almost
 the only one we need to change:
-
 
 {--------------------------------------------------------------}
 { Parse and Translate a Block of Statements }
@@ -317,7 +315,6 @@ begin
 end;
 {--------------------------------------------------------------}
 
-
 Note carefully the subtle change in the case statement.  The call
 to  Assignment  is now guarded by a test on Token.   This  is  to
 avoid calling Assignment when the  token  is  a  semicolon (which
@@ -325,7 +322,6 @@ could happen if the statement is null).
 
 Since declarations are also  statements,  we  also  need to add a
 call to Semi within procedure TopDecls:
-
 
 {--------------------------------------------------------------}
 { Parse and Translate Global Declarations }
@@ -342,9 +338,7 @@ begin
 end;
 {--------------------------------------------------------------}
 
-
 Finally, we need one for the PROGRAM statement:
-
 
 {--------------------------------------------------------------}
 { Main Program }
@@ -363,7 +357,6 @@ begin
 end.
 {--------------------------------------------------------------}
 
-
 It's as easy as that.  Try it with a copy of TINY and see how you
 like it.
 
@@ -371,7 +364,6 @@ The Pascal version  is  a  little  trickier,  but  it  still only
 requires  minor  changes,  and those only to procedure Block.  To
 keep things as simple as possible, let's split the procedure into
 two parts.  The following procedure handles just one statement:
-
 
 {--------------------------------------------------------------}
 { Parse and Translate a Single Statement }
