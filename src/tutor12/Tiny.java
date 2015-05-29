@@ -122,21 +122,39 @@ public class Tiny {
 
     // Recognize White Space
     public boolean isWhite(char c) {
-        return c == ' ' || c == TAB || c == CR || c == LF;
+        return c == ' ' || c == TAB || c == CR || c == LF || c == '{';
     }
 
     // Skip Over Leading White Space
     public void skipWhite() {
         while (isWhite(lookAhead)) {
-            getChar();
+            if (lookAhead == '{') {
+                skipComment();
+            } else {
+                getChar();
+            }
         }
+    }
+
+    // Skip A Comment Field
+    public void skipComment() {
+        while (lookAhead != '}') {
+            getChar();
+            // to deal with nested comments
+            if (lookAhead == '{') {
+                skipComment();
+            }
+        }
+        getChar();
     }
 
     // Match a Semicolon
     public void semi() {
-        matchString(";");
+        if (token == ';') {
+            next();
+        }
     }
-    
+
     // Table Lookup return -1 if the str is not in the keyworklist
     public int lookup(String[] keyWordList, String str) {
         int i = keyWordList.length - 1;
@@ -433,17 +451,6 @@ public class Tiny {
     public void epilog() {
         emitLn("DC WARMST");
         emitLn("END MAIN");
-    }
-
-    // Skip Over an End-of-Line
-    public void newLine() {
-        while (lookAhead == CR) {
-            getChar();
-            if (lookAhead == LF) {
-                getChar();
-            }
-            skipWhite();
-        }
     }
 
     // Get Another Expression and Compare
@@ -806,7 +813,7 @@ public class Tiny {
         // get the next token
         next();
         if (token == '=') {
-            // if variable is assigned certain value it will be 
+            // if variable is assigned certain value it will be
             // initialized with the given value
             next();
             if (token == '-') {

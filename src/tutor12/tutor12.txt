@@ -534,7 +534,6 @@ To  do  this,  first change GetChar back to the way  it  was  and
 change the name called in SkipComment.  Then, let's add  the left
 brace as a possible whitespace character:
 
-
 {--------------------------------------------------------------}
 { Recognize White Space }
 
